@@ -10,6 +10,7 @@ class RequestHandler():
     self.address = address
     self.cl_address = "%s:%s" % self.address
 
+
   def handle_request(self):
     decoded_packet = self.receive_packet(self.client)
     if not decoded_packet:
@@ -83,15 +84,26 @@ class RequestHandler():
     xcommand = recvall(client, 1)
     if not xcommand:
       return client.close()
-    xdata_len = recvall(client, 4)
-    if not xdata_len:
-      return client.close()
+    command = struct.unpack('>B', xcommand)[0]
 
-    command, data_len = struct.unpack('>BI', xcommand + xdata_len)
-    data = recvall(client, data_len)
-    if not data:
+    xuser_len = recvall(client, 1)
+    if not xuser_len:
       return client.close()
-    username, password, message = data.split("|", 2)
+    user_len = struct.unpack('>B', xuser_len)[0]
+    username = recvall(client, user_len)
+
+    xpassword_len = recvall(client, 1)
+    if not xpassword_len:
+      return client.close()
+    password_len = struct.unpack('>B', xpassword_len)[0]
+    password = recvall(client, password_len)
+
+    xmessage_len = recvall(client, 4)
+    if not xmessage_len:
+      return client.close()
+    message_len = struct.unpack('>I', xmessage_len)[0]
+    message = recvall(client, message_len)
+
     return {
       'command': command,
       'username': username,

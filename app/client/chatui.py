@@ -77,8 +77,8 @@ class LoginUI(Frame):
       return None
     self.client.set_server_ip(self.server.get())
     self.client.set_server_port(int(self.port.get()))
-    self.client.set_username(self.username.get().translate(None, '|')) # TEMP
-    self.client.set_password(self.password.get().translate(None, '|')) # TEMP
+    self.client.set_username(self.username.get())
+    self.client.set_password(self.password.get())
     self.client.connect()
 
     if self.client.status == "CONNECTED":
