@@ -9,26 +9,13 @@ class Client():
     self.receiving = False
     self.status = "DISCONNECTED"
 
-  def set_server_ip(self, server_ip):
+
+  def connect(self, server_ip, server_port, username, password):
     self.server_ip = server_ip
-
-
-  def set_server_port(self, server_port):
     self.server_port = server_port
-
-
-  def set_username(self, username):
     self.username = username
-
-
-  def set_password(self, password):
     self.password = password
 
-
-  def set_receiving(self, receiving):
-    self.receiving = receiving
-
-  def connect(self):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((self.server_ip, self.server_port))
 

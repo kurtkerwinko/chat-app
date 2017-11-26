@@ -18,7 +18,6 @@ class RequestHandler():
       return None
     self.authenticated = self.authenticate(decoded_packet["username"], decoded_packet["password"])
 
-
     if (decoded_packet["command"] == 1):
       self.connect(decoded_packet)
     elif (decoded_packet["command"] == 2 and self.authenticated):

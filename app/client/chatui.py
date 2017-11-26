@@ -75,11 +75,8 @@ class LoginUI(Frame):
   def connect(self, event=None):
     if not self.port.get().isdigit():
       return None
-    self.client.set_server_ip(self.server.get())
-    self.client.set_server_port(int(self.port.get()))
-    self.client.set_username(self.username.get())
-    self.client.set_password(self.password.get())
-    self.client.connect()
+
+    self.client.connect(self.server.get(), int(self.port.get()), self.username.get(), self.password.get())
 
     if self.client.status == "CONNECTED":
       self.parent.logged_in()
