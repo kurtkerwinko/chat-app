@@ -44,6 +44,7 @@ class Client():
 
   def disconnect(self):
     self.receiving = False
+    self.status = "DISCONNECTED"
     self.send_packet("DISCONNECT")
 
 
