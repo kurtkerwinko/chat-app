@@ -1,6 +1,6 @@
 # Chat App
 
-Simple chat app
+Simple Client-Server Chat App
 
 ## To Run
 
