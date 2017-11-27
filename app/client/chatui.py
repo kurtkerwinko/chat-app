@@ -1,5 +1,5 @@
 from Tkinter import *
-from random import *
+from random import randint
 from app.client.client import Client
 
 # Tkinter UI
