@@ -63,7 +63,7 @@ class Client():
     elif pkt["command"] == "WHISPER":
       pass
     elif pkt["command"] == "USER_LIST":
-      pass
+      gui.update_user_list(pkt["data"])
 
 
   def send_packet(self, command, data={}, close=True):
