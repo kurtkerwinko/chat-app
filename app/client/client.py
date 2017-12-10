@@ -36,10 +36,14 @@ class Client():
 
 
   def send_message(self, message):
-    self.send_packet("SEND", message)
+    if message.startswith("/"):
+      self.chat_commands(message)
+    else:
+      self.send_packet("SEND", message)
 
 
   def start_receiving(self, gui):
+    self.gui = gui
     self.receiving = True
     self.recv_thread = threading.Thread(target=self.listen_packets, args=(gui,))
     self.recv_thread.daemon = True
@@ -86,3 +90,15 @@ class Client():
       return None
     pkt_len = struct.unpack('>I', xpkt_len)[0]
     return decode_packet(recvall(sock, pkt_len))
+
+
+  def chat_commands(self, string):
+    command = string.split(" ", 1)[0]
+    if command in ["/help", "/h"]:
+      message = "List of commands\n" \
+              + "/h -- show this\n" \
+              + "/whisper or /w [user] [message] sends a private message\n" \
+              + "/reply or /r [message] -- sends a reply to latest private message"
+      self.gui.recv_msg(message)
+    else:
+      self.gui.recv_msg("Invalid Command")
