@@ -135,11 +135,23 @@ class ChatUI(Frame):
 
 
   def createWidgets(self):
-    def input_autocomplete(text):
+    def input_reply_auto(text):
       if text.get().startswith(("/reply ", "/r ")):
         if self.client.last_received:
           self.input.delete(0, END)
           self.input.insert(0, "/w %s " % (self.client.last_received))
+
+
+    def input_whisper_auto(event=None):
+      if self.input.get().startswith(("/whisper ", "/w ")):
+        args = self.input.get().split(" ", 2)
+        if len(args) < 3:
+          matching = [x for x in self.user_list.get(0, END) if x.startswith(args[1])]
+          if len(matching) == 1:
+            self.input.delete(0, END)
+            self.input.insert(0, "/w %s " % (matching[0]))
+          return("break")
+
 
     self.rowconfigure(0, weight=1)
     self.rowconfigure(1, weight=1000)
@@ -173,9 +185,10 @@ class ChatUI(Frame):
     # Row 2
     input_text = StringVar()
     self.input = Entry(self, textvariable=input_text)
-    input_text.trace("w", lambda *args: input_autocomplete(input_text))
+    input_text.trace("w", lambda *args: input_reply_auto(input_text))
     self.input.grid(row=2, column=0, sticky=N+S+W+E)
     self.input.bind("<Return>", self.send_msg)
+    self.input.bind("<Tab>", input_whisper_auto)
 
     self.send = Button(self, text="SEND", command=self.send_msg)
     self.send.grid(row=2, column=1, columnspan=2, sticky=N+S+W+E)
