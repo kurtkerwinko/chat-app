@@ -128,6 +128,12 @@ class ChatUI(Frame):
     self.display.see(END)
 
 
+  def update_user_list(self, user_list):
+    self.user_list.delete(0, END)
+    for user in user_list:
+      self.user_list.insert(END, user)
+
+
   def createWidgets(self):
     self.rowconfigure(0, weight=1)
     self.rowconfigure(1, weight=1000)
@@ -136,10 +142,19 @@ class ChatUI(Frame):
     self.columnconfigure(0, minsize=1, weight=10000)
     self.columnconfigure(1, minsize=1, weight=1)
     self.columnconfigure(2, minsize=1, weight=1)
+    self.columnconfigure(3, minsize=1, weight=1)
+    self.columnconfigure(4, minsize=1, weight=1)
 
     # Row 0
     self.disconnect = Button(self, text="DISCONNECT", command=self.disconnect)
     self.disconnect.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
+
+    self.user_list = Listbox(self, selectmode="SINGLE")
+    self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)
+    self.user_list_ds = Scrollbar(self)
+    self.user_list_ds.grid(row=0, rowspan=3, column=4, sticky=N+S+E)
+    self.user_list_ds.config(command=self.user_list.yview)
+    self.user_list.config(yscrollcommand=self.user_list_ds.set)
 
     # Row 1
     self.display = Text(self)

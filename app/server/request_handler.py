@@ -1,6 +1,6 @@
 import socket
 import struct
-from packet import *
+from packet import encode_packet, decode_packet
 from app.helper.socket_helper import recvall
 
 class RequestHandler():
@@ -12,51 +12,49 @@ class RequestHandler():
 
 
   def handle_request(self):
-    decoded_packet = self.receive_packet(self.client)
-    if not decoded_packet:
+    pkt = self.receive_packet(self.client)
+    if not pkt:
       self.client.close()
       return None
-    self.authenticated = self.authenticate(decoded_packet["username"], decoded_packet["password"])
+    self.authenticated = self.authenticate(pkt["username"], pkt["password"])
 
-    if (decoded_packet["command"] == 1):
-      self.connect(decoded_packet)
-    elif (decoded_packet["command"] == 2 and self.authenticated):
-      self.disconnect(decoded_packet)
-    elif (decoded_packet["command"] == 3 and self.authenticated):
-      self.send(decoded_packet)
+    if (pkt["command"] == "CONNECT"):
+      self.connect(pkt)
+    elif (pkt["command"] == "DISCONNECT" and self.authenticated):
+      self.disconnect(pkt)
+    elif (pkt["command"] == "SEND" and self.authenticated):
+      self.broadcast("%s: %s" % (pkt["username"], pkt["data"]))
+      self.client.close()
     else:
       self.client.close()
 
 
-  def connect(self, decoded_packet):
-    if self.user_exists(decoded_packet["username"]):
-      self.send_packet(self.client, "USERNAME_TAKEN")
+  def connect(self, pkt):
+    if self.user_exists(pkt["username"]):
+      self.send_message(self.client, "USERNAME_TAKEN")
       self.client.close()
       print("FAILED - USERNAME TAKEN: %s" % (self.cl_address))
     else:
-      self.broadcast("<SERVER> " + decoded_packet["username"] + " CONNECTED")
-      self.active_connections[decoded_packet["username"]] = {
+      self.broadcast("<SERVER> " + pkt["username"] + " CONNECTED")
+      self.active_connections[pkt["username"]] = {
         'client': self.client,
         'ip_address': self.cl_address,
-        'password': decoded_packet["password"]
+        'password': pkt["password"]
       }
-      self.send_packet(self.client, "CONNECTED")
+      self.send_message(self.client, "CONNECTED")
       print("CONNECTED: %s" % (self.cl_address))
+      self.broadcast_user_list()
 
 
-  def disconnect(self, decoded_packet):
-    ac = self.active_connections[decoded_packet["username"]]
-    del self.active_connections[decoded_packet["username"]]
+  def disconnect(self, pkt):
+    ac = self.active_connections[pkt["username"]]
+    del self.active_connections[pkt["username"]]
     cl_socket = ac["client"]
     cl_socket.close()
     print("DISCONNECTED: %s" % (ac["ip_address"]))
-    self.broadcast("<SERVER> " + decoded_packet["username"] + " DISCONNECTED")
+    self.broadcast("<SERVER> " + pkt["username"] + " DISCONNECTED")
     self.client.close()
-
-
-  def send(self, decoded_packet):
-    self.broadcast("%s: %s" % (decoded_packet["username"], decoded_packet["message"]))
-    self.client.close()
+    self.broadcast_user_list()
 
 
   def broadcast(self, message):
@@ -64,7 +62,7 @@ class RequestHandler():
     for c in self.active_connections:
       acl = self.active_connections[c]["client"]
       try: # TEMP TRY > Cause: CONNECTION DROPS
-        self.send_packet(acl, message)
+        self.send_message(acl, message)
       except:
         dropped.append(c)
     for c in dropped:
@@ -72,43 +70,46 @@ class RequestHandler():
       del self.active_connections[c]
     if len(dropped) > 0:
       self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
+      self.broadcast_user_list()
 
 
-  def send_packet(self, cl, message):
-    data = encode_client_packet(message)
-    cl.sendall(data)
+  def broadcast_user_list(self):
+    dropped = [] # TEMP
+    for c in self.active_connections:
+      acl = self.active_connections[c]["client"]
+      try: # TEMP TRY > Cause: CONNECTION DROPS
+        self.send_user_list(acl)
+      except:
+        dropped.append(c)
+    for c in dropped:
+      print("DISCONNECTED: %s" % (self.active_connections[c]["ip_address"]))
+      del self.active_connections[c]
+    if len(dropped) > 0:
+      self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
+      self.broadcast_user_list()
+
+
+  def send_user_list(self, cl):
+    self.send_packet(cl, "USER_LIST", sorted(self.active_connections.keys()))
+
+
+  def send_message(self, cl, message):
+    self.send_packet(cl, "MESSAGE", message)
+
+
+  def send_packet(self, cl, command, data):
+    cl.sendall(encode_packet({
+      "command": command,
+      "data": data,
+    }))
 
 
   def receive_packet(self, client):
-    xcommand = recvall(client, 1)
-    if not xcommand:
+    xpkt_len = recvall(client, 4)
+    if not xpkt_len:
       return client.close()
-    command = struct.unpack('>B', xcommand)[0]
-
-    xuser_len = recvall(client, 1)
-    if not xuser_len:
-      return client.close()
-    user_len = struct.unpack('>B', xuser_len)[0]
-    username = recvall(client, user_len)
-
-    xpassword_len = recvall(client, 1)
-    if not xpassword_len:
-      return client.close()
-    password_len = struct.unpack('>B', xpassword_len)[0]
-    password = recvall(client, password_len)
-
-    xmessage_len = recvall(client, 4)
-    if not xmessage_len:
-      return client.close()
-    message_len = struct.unpack('>I', xmessage_len)[0]
-    message = recvall(client, message_len)
-
-    return {
-      'command': command,
-      'username': username,
-      'password': password,
-      'message': message
-    }
+    pkt_len = struct.unpack('>I', xpkt_len)[0]
+    return decode_packet(recvall(client, pkt_len))
 
 
   def authenticate(self, username, password):
