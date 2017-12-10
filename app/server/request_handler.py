@@ -70,6 +70,7 @@ class RequestHandler():
       del self.active_connections[c]
     if len(dropped) > 0:
       self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
+      self.broadcast_user_list()
 
 
   def broadcast_user_list(self):
