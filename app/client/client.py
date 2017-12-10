@@ -16,14 +16,7 @@ class Client():
     self.username = username
     self.password = password
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((self.server_ip, self.server_port))
-
-    s.sendall(encode_packet({
-      "command": "CONNECT",
-      "username": self.username,
-      "password": self.password,
-    }))
+    s = self.send_packet("CONNECT", close=False)
     resp = self.receive_packet(s)["data"]
     if resp == "CONNECTED":
       self.server_socket = s
@@ -73,7 +66,7 @@ class Client():
       pass
 
 
-  def send_packet(self, command, data={}):
+  def send_packet(self, command, data={}, close=True):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((self.server_ip, self.server_port))
     s.sendall(encode_packet({
@@ -82,7 +75,9 @@ class Client():
       "password": self.password,
       "data": data,
     }))
-    s.close()
+    if close:
+      s.close()
+    return s
 
 
   def receive_packet(self, sock):
