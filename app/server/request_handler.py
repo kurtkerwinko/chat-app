@@ -71,9 +71,7 @@ class RequestHandler():
 
 
   def send_message(self, cl, message):
-    self.send_packet(cl, "MESSAGE", {
-      "message": message,
-    })
+    self.send_packet(cl, "MESSAGE", message)
 
 
   def send_packet(self, cl, command, data):
