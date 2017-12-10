@@ -29,5 +29,4 @@ active_connections = {}
 while True:
   (client, address) = s.accept()
   ct = threading.Thread(target=dispatch_req, args=(active_connections, client, address))
-  ct.daemon = True
   ct.start()
