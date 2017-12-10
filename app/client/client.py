@@ -70,6 +70,11 @@ class Client():
 
 
   def receive_packet(self, sock):
+    xcommand = recvall(sock, 1)
+    if not xcommand:
+      return sock.close()
+    command = struct.unpack('>B', xcommand)[0]
+
     xdata_len = recvall(sock, 4)
     if not xdata_len:
       return None

@@ -135,10 +135,14 @@ class ChatUI(Frame):
     self.columnconfigure(0, minsize=1, weight=10000)
     self.columnconfigure(1, minsize=1, weight=1)
     self.columnconfigure(2, minsize=1, weight=1)
+    self.columnconfigure(3, minsize=1, weight=1)
 
     # Row 0
     self.disconnect = Button(self, text="DISCONNECT", command=self.disconnect)
     self.disconnect.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
+
+    self.user_list = Listbox(self, selectmode="SINGLE")
+    self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)
 
     # Row 1
     self.display = Text(self)

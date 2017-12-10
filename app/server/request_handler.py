@@ -23,24 +23,24 @@ class RequestHandler():
     elif (decoded_packet["command"] == 2 and self.authenticated):
       self.disconnect(decoded_packet)
     elif (decoded_packet["command"] == 3 and self.authenticated):
-      self.send(decoded_packet)
+      self.send_message(decoded_packet)
     else:
       self.client.close()
 
 
   def connect(self, decoded_packet):
     if self.user_exists(decoded_packet["username"]):
-      self.send_packet(self.client, "USERNAME_TAKEN")
+      self.send_packet(self.client, "MESSAGE", "USERNAME_TAKEN")
       self.client.close()
       print("FAILED - USERNAME TAKEN: %s" % (self.cl_address))
     else:
-      self.broadcast("<SERVER> " + decoded_packet["username"] + " CONNECTED")
+      self.broadcast("MESSAGE", "<SERVER> " + decoded_packet["username"] + " CONNECTED")
       self.active_connections[decoded_packet["username"]] = {
         'client': self.client,
         'ip_address': self.cl_address,
         'password': decoded_packet["password"]
       }
-      self.send_packet(self.client, "CONNECTED")
+      self.send_packet(self.client, "MESSAGE", "CONNECTED")
       print("CONNECTED: %s" % (self.cl_address))
 
 
@@ -50,32 +50,32 @@ class RequestHandler():
     cl_socket = ac["client"]
     cl_socket.close()
     print("DISCONNECTED: %s" % (ac["ip_address"]))
-    self.broadcast("<SERVER> " + decoded_packet["username"] + " DISCONNECTED")
+    self.broadcast("MESSAGE", "<SERVER> " + decoded_packet["username"] + " DISCONNECTED")
     self.client.close()
 
 
-  def send(self, decoded_packet):
-    self.broadcast("%s: %s" % (decoded_packet["username"], decoded_packet["message"]))
+  def send_message(self, decoded_packet):
+    self.broadcast("MESSAGE", "%s: %s" % (decoded_packet["username"], decoded_packet["message"]))
     self.client.close()
 
 
-  def broadcast(self, message):
+  def broadcast(self, command, message):
     dropped = [] # TEMP
     for c in self.active_connections:
       acl = self.active_connections[c]["client"]
       try: # TEMP TRY > Cause: CONNECTION DROPS
-        self.send_packet(acl, message)
+        self.send_packet(acl, command, message)
       except:
         dropped.append(c)
     for c in dropped:
       print("DISCONNECTED: %s" % (self.active_connections[c]["ip_address"]))
       del self.active_connections[c]
     if len(dropped) > 0:
-      self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
+      self.broadcast("MESSAGE", "DISCONNECTED: %s" % (','.join(dropped)))
 
 
-  def send_packet(self, cl, message):
-    data = encode_client_packet(message)
+  def send_packet(self, cl, command, message):
+    data = encode_client_packet(command, message)
     cl.sendall(data)
 
 
