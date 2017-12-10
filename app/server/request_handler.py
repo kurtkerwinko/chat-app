@@ -100,8 +100,8 @@ class RequestHandler():
     if recv_user in self.active_connections.keys():
       recv_cl = self.active_connections[recv_user]["client"]
       message = pkt["data"]["message"]
-      self.send_whisper(recv_cl, from_user, "<From: %s>: %s" % (from_user, message))
       self.send_whisper(cl, recv_user, "<To: %s>: %s" % (recv_user, message))
+      self.send_whisper(recv_cl, from_user, "<From: %s>: %s" % (from_user, message))
     else:
       self.send_message(cl, "User does not exist.")
 
