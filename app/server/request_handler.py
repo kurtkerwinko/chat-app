@@ -23,7 +23,7 @@ class RequestHandler():
     elif (pkt["command"] == "DISCONNECT" and self.authenticated):
       self.disconnect(pkt)
     elif (pkt["command"] == "SEND" and self.authenticated):
-      self.broadcast("%s: %s" % (pkt["username"], pkt["data"]["message"]))
+      self.broadcast("%s: %s" % (pkt["username"], pkt["data"]))
       self.client.close()
     else:
       self.client.close()
