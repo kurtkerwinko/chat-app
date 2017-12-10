@@ -135,6 +135,12 @@ class ChatUI(Frame):
 
 
   def createWidgets(self):
+    def input_autocomplete(text):
+      if text.get().startswith(("/reply ", "/r ")):
+        if self.client.last_received:
+          self.input.delete(0, END)
+          self.input.insert(0, "/w %s " % (self.client.last_received))
+
     self.rowconfigure(0, weight=1)
     self.rowconfigure(1, weight=1000)
     self.rowconfigure(2, weight=1)
@@ -165,7 +171,9 @@ class ChatUI(Frame):
     self.display.config(state=DISABLED, wrap="word", yscrollcommand=self.display_ds.set)
 
     # Row 2
-    self.input = Entry(self)
+    input_text = StringVar()
+    self.input = Entry(self, textvariable=input_text)
+    input_text.trace("w", lambda *args: input_autocomplete(input_text))
     self.input.grid(row=2, column=0, sticky=N+S+W+E)
     self.input.bind("<Return>", self.send_msg)
 
