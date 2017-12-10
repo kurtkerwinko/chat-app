@@ -1,7 +1,7 @@
 import socket
 import threading
 import struct
-from app.server.packet import encode_server_packet
+from app.server.packet import encode_packet, decode_packet
 from app.helper.socket_helper import recvall
 
 class Client():
@@ -19,8 +19,11 @@ class Client():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((self.server_ip, self.server_port))
 
-    data = encode_server_packet("CONNECT", self.username, self.password)
-    s.sendall(data)
+    s.sendall(encode_packet({
+      "command": "CONNECT",
+      "username": self.username,
+      "password": self.password,
+    }))
     resp = self.receive_packet(s)["data"]
     if resp == "CONNECTED":
       self.server_socket = s
@@ -37,14 +40,6 @@ class Client():
 
   def get_server_address(self):
     return "%s:%s" % (self.server_ip, self.server_port)
-
-
-  def send_packet(self, command, message=""):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((self.server_ip, self.server_port))
-    data = encode_server_packet(command, self.username, self.password, message)
-    s.sendall(data)
-    s.close()
 
 
   def send_message(self, message):
@@ -64,33 +59,35 @@ class Client():
 
   def listen_packets(self, gui):
     while self.receiving:
-      decoded_packet = self.receive_packet(self.server_socket)
-      if decoded_packet:
-        self.process_packet(gui, decoded_packet)
+      pkt = self.receive_packet(self.server_socket)
+      if pkt:
+        self.process_packet(gui, pkt)
 
 
-  def process_packet(self, gui, decoded_packet):
-    if decoded_packet["command"] == 1: # MESSAGE
-      gui.recv_msg(decoded_packet["data"])
-    elif decoded_packet["command"] == 2: # WHISPER
+  def process_packet(self, gui, pkt):
+    if pkt["command"] == "MESSAGE":
+      gui.recv_msg(pkt["data"])
+    elif pkt["command"] == "WHISPER":
       pass
-    elif decoded_packet["command"] == 3: # USER LIST
+    elif pkt["command"] == "USER_LIST":
       pass
+
+
+  def send_packet(self, command, data={}):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((self.server_ip, self.server_port))
+    s.sendall(encode_packet({
+      "command": command,
+      "username": self.username,
+      "password": self.password,
+      "data": data,
+    }))
+    s.close()
 
 
   def receive_packet(self, sock):
-    xcommand = recvall(sock, 1)
-    if not xcommand:
+    xpkt_len = recvall(sock, 4)
+    if not xpkt_len:
       return None
-    command = struct.unpack('>B', xcommand)[0]
-
-    xdata_len = recvall(sock, 4)
-    if not xdata_len:
-      return None
-    data_len = struct.unpack('>I', xdata_len)[0]
-    data = recvall(sock, data_len)
-
-    return {
-      "command": command,
-      "data": data,
-    }
+    pkt_len = struct.unpack('>I', xpkt_len)[0]
+    return decode_packet(recvall(sock, pkt_len))
