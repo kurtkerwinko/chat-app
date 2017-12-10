@@ -24,6 +24,7 @@ class LoginUI(Frame):
 
     self.root.update()
 
+
   def createWidgets(self):
     def character_limit(text, limit):
       if len(text.get()) > 0:
