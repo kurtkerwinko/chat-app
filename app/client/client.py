@@ -21,7 +21,7 @@ class Client():
 
     data = encode_server_packet("CONNECT", self.username, self.password)
     s.sendall(data)
-    resp = self.receive_packet(s)
+    resp = self.receive_packet(s)["data"]
     if resp == "CONNECTED":
       self.server_socket = s
       self.status = "CONNECTED"
@@ -53,7 +53,7 @@ class Client():
 
   def start_receiving(self, gui):
     self.receiving = True
-    self.recv_thread = threading.Thread(target=self.receive_message, args=(gui,))
+    self.recv_thread = threading.Thread(target=self.listen_packets, args=(gui,))
     self.recv_thread.daemon = True
     self.recv_thread.start()
 
@@ -62,21 +62,35 @@ class Client():
     self.receiving = False
 
 
-  def receive_message(self, gui):
+  def listen_packets(self, gui):
     while self.receiving:
-      message = self.receive_packet(self.server_socket)
-      if message:
-        gui.recv_msg(message)
+      decoded_packet = self.receive_packet(self.server_socket)
+      if decoded_packet:
+        self.process_packet(gui, decoded_packet)
+
+
+  def process_packet(self, gui, decoded_packet):
+    if decoded_packet["command"] == 1: # MESSAGE
+      gui.recv_msg(decoded_packet["data"])
+    elif decoded_packet["command"] == 2: # WHISPER
+      pass
+    elif decoded_packet["command"] == 3: # USER LIST
+      pass
 
 
   def receive_packet(self, sock):
     xcommand = recvall(sock, 1)
     if not xcommand:
-      return sock.close()
+      return None
     command = struct.unpack('>B', xcommand)[0]
 
     xdata_len = recvall(sock, 4)
     if not xdata_len:
       return None
     data_len = struct.unpack('>I', xdata_len)[0]
-    return recvall(sock, data_len)
+    data = recvall(sock, data_len)
+
+    return {
+      "command": command,
+      "data": data,
+    }
