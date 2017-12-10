@@ -89,7 +89,7 @@ class RequestHandler():
 
 
   def send_user_list(self, cl):
-    self.send_packet(cl, "USER_LIST", self.active_connections.keys())
+    self.send_packet(cl, "USER_LIST", sorted(self.active_connections.keys()))
 
 
   def send_message(self, cl, message):
