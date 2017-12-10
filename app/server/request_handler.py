@@ -3,6 +3,7 @@ import struct
 from packet import encode_packet, decode_packet
 from app.helper.socket_helper import recvall
 
+
 class RequestHandler():
   def __init__(self, active_connections, client, address):
     self.active_connections = active_connections
@@ -24,6 +25,9 @@ class RequestHandler():
       self.disconnect(pkt)
     elif (pkt["command"] == "SEND" and self.authenticated):
       self.broadcast("%s: %s" % (pkt["username"], pkt["data"]))
+      self.client.close()
+    elif (pkt["command"] == "WHISPER" and self.authenticated):
+      self.whisper(pkt)
       self.client.close()
     else:
       self.client.close()
@@ -89,12 +93,32 @@ class RequestHandler():
       self.broadcast_user_list()
 
 
+  def whisper(self, pkt):
+    from_user = pkt["username"]
+    recv_user = pkt["data"]["user"]
+    cl = self.active_connections[pkt["username"]]["client"]
+    if recv_user in self.active_connections.keys():
+      recv_cl = self.active_connections[recv_user]["client"]
+      message = pkt["data"]["message"]
+      self.send_whisper(recv_cl, from_user, "<From: %s>: %s" % (from_user, message))
+      self.send_whisper(cl, recv_user, "<To: %s>: %s" % (recv_user, message))
+    else:
+      self.send_message(cl, "User does not exist.")
+
+
   def send_user_list(self, cl):
     self.send_packet(cl, "USER_LIST", sorted(self.active_connections.keys()))
 
 
   def send_message(self, cl, message):
     self.send_packet(cl, "MESSAGE", message)
+
+
+  def send_whisper(self, cl, user, message):
+    self.send_packet(cl, "WHISPER", {
+      "user": user,
+      "message": message,
+    })
 
 
   def send_packet(self, cl, command, data):

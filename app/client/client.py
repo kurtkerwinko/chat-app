@@ -4,11 +4,12 @@ import struct
 from app.server.packet import encode_packet, decode_packet
 from app.helper.socket_helper import recvall
 
+
 class Client():
   def __init__(self):
     self.receiving = False
     self.status = "DISCONNECTED"
-
+    self.last_received = None
 
   def connect(self, server_ip, server_port, username, password):
     self.server_ip = server_ip
@@ -55,19 +56,19 @@ class Client():
 
 
   def listen_packets(self, gui):
+    def process_packet(gui, pkt):
+      if pkt["command"] == "MESSAGE":
+        gui.recv_msg(pkt["data"])
+      elif pkt["command"] == "WHISPER":
+        self.last_received = pkt["data"]["user"]
+        gui.recv_msg(pkt["data"]["message"])
+      elif pkt["command"] == "USER_LIST":
+        gui.update_user_list(pkt["data"])
+
     while self.receiving:
       pkt = self.receive_packet(self.server_socket)
       if pkt:
-        self.process_packet(gui, pkt)
-
-
-  def process_packet(self, gui, pkt):
-    if pkt["command"] == "MESSAGE":
-      gui.recv_msg(pkt["data"])
-    elif pkt["command"] == "WHISPER":
-      pass
-    elif pkt["command"] == "USER_LIST":
-      gui.update_user_list(pkt["data"])
+        process_packet(gui, pkt)
 
 
   def send_packet(self, command, data={}, close=True):
@@ -100,5 +101,23 @@ class Client():
               + "/whisper or /w [user] [message] sends a private message\n" \
               + "/reply or /r [message] -- sends a reply to latest private message"
       self.gui.recv_msg(message)
+    elif command in ["/whisper", "/w"]:
+      args = string.split(" ", 2)
+      if len(args) == 3:
+        self.send_packet("WHISPER", {
+          "user": args[1],
+          "message": args[2],
+        })
+      else:
+        self.gui.recv_msg("Invalid use of /whisper. /whisper [user] [message]")
+    elif command in ["/reply", "/r"]:
+      args = string.split(" ", 1)
+      if len(args) == 2:
+        if self.last_received:
+          self.chat_commands(" ".join(["/w", self.last_received, args[1]]))
+        else:
+          self.gui.recv_msg("No one sent you a private message.")
+      else:
+        self.gui.recv_msg("Invalid use of /reply. /reply [message]")
     else:
       self.gui.recv_msg("Invalid Command")
