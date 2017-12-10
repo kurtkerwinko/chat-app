@@ -45,6 +45,7 @@ class RequestHandler():
       print("CONNECTED: %s" % (self.cl_address))
       self.broadcast_user_list()
 
+
   def disconnect(self, pkt):
     ac = self.active_connections[pkt["username"]]
     del self.active_connections[pkt["username"]]
@@ -54,6 +55,7 @@ class RequestHandler():
     self.broadcast("<SERVER> " + pkt["username"] + " DISCONNECTED")
     self.client.close()
     self.broadcast_user_list()
+
 
   def broadcast(self, message):
     dropped = [] # TEMP
@@ -84,6 +86,7 @@ class RequestHandler():
     if len(dropped) > 0:
       self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
       self.broadcast_user_list()
+
 
   def send_user_list(self, cl):
     self.send_packet(cl, "USER_LIST", self.active_connections.keys())
