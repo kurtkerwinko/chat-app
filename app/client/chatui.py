@@ -136,12 +136,13 @@ class ChatUI(Frame):
 
   def createWidgets(self):
     def longest_common_string(match, usr_list):
-      if len(usr_list) == 0 or len(match) >= len(min(usr_list, key=len)):
+      if len(usr_list) == 0:
         return match
       if all(x.startswith(match) for x in usr_list):
+        if len(match) >= len(min(usr_list, key=len)):
+          return match
         return longest_common_string(match + usr_list[0][len(match)], usr_list)
-      else:
-        return match[:-1]
+      return match[:-1]
 
 
     def input_reply_auto(text):
