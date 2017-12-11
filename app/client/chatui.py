@@ -18,6 +18,7 @@ class LoginUI(Frame):
     self.USERNAME_LIMIT = 9
     self.PASSWORD_LIMIT = 16
     self.SERVER_LIMIT = 15
+    self.PORT_LIMIT = 5
 
     self.grid()
     self.createWidgets()
@@ -65,7 +66,9 @@ class LoginUI(Frame):
     self.server.grid(row=2, column=1, sticky=N+S+W+E)
     self.server.insert(0, "localhost")
 
-    self.port = Entry(self)
+    port_text = StringVar()
+    self.port = Entry(self, textvariable=port_text)
+    port_text.trace("w", lambda *args: character_limit(port_text, self.PORT_LIMIT))
     self.port.grid(row=3, column=1, sticky=N+S+W+E)
     self.port.insert(0, "3000")
 
