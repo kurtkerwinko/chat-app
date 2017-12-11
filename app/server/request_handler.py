@@ -9,7 +9,7 @@ class RequestHandler():
     self.active_connections = active_connections
     self.client = client
     self.address = address
-    self.cl_address = "%s:%s" % self.address
+    self.cl_addr = "%s:%s" % self.address
 
 
   def handle_request(self):
@@ -37,16 +37,16 @@ class RequestHandler():
     if self.user_exists(pkt["username"]):
       self.send_message(self.client, "USERNAME_TAKEN")
       self.client.close()
-      print("FAILED - USERNAME TAKEN: %s" % (self.cl_address))
+      print("FAILED - USERNAME TAKEN: %s @ %s" % (pkt["username"], self.cl_addr))
     else:
       self.broadcast("<SERVER> " + pkt["username"] + " CONNECTED")
       self.active_connections[pkt["username"]] = {
         'client': self.client,
-        'ip_address': self.cl_address,
+        'ip_address': self.cl_addr,
         'password': pkt["password"]
       }
       self.send_message(self.client, "CONNECTED")
-      print("CONNECTED: %s" % (self.cl_address))
+      print("CONNECTED: %s @ %s" % (pkt["username"], self.cl_addr))
       self.broadcast_user_list()
 
 
@@ -55,7 +55,7 @@ class RequestHandler():
     del self.active_connections[pkt["username"]]
     cl_socket = ac["client"]
     cl_socket.close()
-    print("DISCONNECTED: %s" % (ac["ip_address"]))
+    print("DISCONNECTED: %s @ %s" % (pkt["username"], ac["ip_address"]))
     self.broadcast("<SERVER> " + pkt["username"] + " DISCONNECTED")
     self.client.close()
     self.broadcast_user_list()
@@ -70,7 +70,8 @@ class RequestHandler():
       except:
         dropped.append(c)
     for c in dropped:
-      print("DISCONNECTED: %s" % (self.active_connections[c]["ip_address"]))
+      ip_addr = self.active_connections[c]["ipaddress"]
+      print("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
       self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
@@ -86,7 +87,8 @@ class RequestHandler():
       except:
         dropped.append(c)
     for c in dropped:
-      print("DISCONNECTED: %s" % (self.active_connections[c]["ip_address"]))
+      ip_addr = self.active_connections[c]["ipaddress"]
+      print("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
       self.broadcast("DISCONNECTED: %s" % (','.join(dropped)))
