@@ -70,7 +70,7 @@ class RequestHandler():
       except:
         dropped.append(c)
     for c in dropped:
-      ip_addr = self.active_connections[c]["ipaddress"]
+      ip_addr = self.active_connections[c]["ip_address"]
       print("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
@@ -87,7 +87,7 @@ class RequestHandler():
       except:
         dropped.append(c)
     for c in dropped:
-      ip_addr = self.active_connections[c]["ipaddress"]
+      ip_addr = self.active_connections[c]["ip_address"]
       print("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
