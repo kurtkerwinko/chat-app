@@ -135,6 +135,15 @@ class ChatUI(Frame):
 
 
   def createWidgets(self):
+    def longest_common_string(match, usr_list):
+      if len(usr_list) == 0 or len(match) >= len(min(usr_list, key=len)):
+        return match
+      if all(x.startswith(match) for x in usr_list):
+        return longest_common_string(match + usr_list[0][len(match)], usr_list)
+      else:
+        return match[:-1]
+
+
     def input_reply_auto(text):
       if text.get().startswith(("/reply ", "/r ")):
         if self.client.last_received:
@@ -147,10 +156,12 @@ class ChatUI(Frame):
         args = self.input.get().split(" ", 2)
         if len(args) < 3:
           matching = [x for x in self.user_list.get(0, END) if x.startswith(args[1])]
+          match = longest_common_string(args[1], matching)
           if len(matching) == 1:
-            self.input.delete(0, END)
-            self.input.insert(0, "/w %s " % (matching[0]))
-          return("break")
+            match += " "
+          self.input.delete(0, END)
+          self.input.insert(0, "/w %s" % (match))
+      return("break")
 
 
     self.rowconfigure(0, weight=1)
