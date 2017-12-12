@@ -36,8 +36,9 @@ class ChatUI(Frame):
 
   def send_msg(self, event=None):
     if len(self.input.get()) > 0:
-      self.client.send_message(self.input.get())
+      text = self.input.get()
       self.input.delete(0, END)
+      self.client.send_message(text)
 
 
   def recv_msg(self, *argv):
@@ -144,8 +145,8 @@ class ChatUI(Frame):
     self.columnconfigure(4, minsize=1, weight=1)
 
     # Row 0
-    self.disconnect = Button(self, text="DISCONNECT", command=self.disconnect)
-    self.disconnect.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
+    self.dc_button = Button(self, text="DISCONNECT", command=self.disconnect)
+    self.dc_button.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
 
     self.user_list = Listbox(self, selectmode="SINGLE")
     self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)

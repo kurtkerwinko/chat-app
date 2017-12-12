@@ -92,9 +92,10 @@ class Client():
     command = string.split(" ", 1)[0]
     if command in ["/help", "/h"]:
       message = "List of commands\n" \
-              + "/h -- show this\n" \
+              + "/help or /h -- show this\n" \
               + "/whisper or /w [user] [message] sends a private message\n" \
-              + "/reply or /r [message] -- sends a reply to latest private message"
+              + "/reply or /r [message] -- sends a reply to latest private message" \
+              + "/disconnect or /dc -- disconnect from server"
       self.gui.recv_msg([message, "HELP_FG"])
     elif command in ["/whisper", "/w"]:
       args = string.split(" ", 2)
@@ -118,6 +119,8 @@ class Client():
       else:
         message = "Invalid use of /reply. /reply [message]"
         self.gui.recv_msg([message, "ERROR_FG"])
+    elif command in ["/disconnect", "/dc"]:
+      self.gui.disconnect()
     else:
       message = "Invalid Command"
       self.gui.recv_msg([message, "ERROR_FG"])
