@@ -74,6 +74,11 @@ class ChatUI(Frame):
         for user in pkt['username']:
           msg += ([user, "USER_FG"], [", ", "SRV_MSG_FG"])
         return msg[:-1] + ([" DISCONNECTED", "SRV_MSG_FG"], )
+      else:
+        return (
+          [pkt['username'], "USER_FG"],
+          [" DISCONNECTED", "SRV_MSG_FG"],
+        )
     if pkt['type'] == 'USR_MSG':
       return (
         ["{username}".format(**pkt), "USER_FG"],
