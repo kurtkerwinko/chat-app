@@ -28,7 +28,6 @@ class Client():
       self.server_socket = s
       self.status = "CONNECTED"
     elif resp['type'] == "SRV_ERR":
-      print(resp['message'])
       s.close()
     else:
       s.close()
