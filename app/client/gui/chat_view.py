@@ -23,7 +23,8 @@ class ChatUI(Frame):
 
   def connected(self):
     self.display.config(state=NORMAL)
-    self.display.insert(END, "Connected to %s:%s" %(self.client.server_ip, self.client.server_port))
+    msg = "Connected to %s:%s" % (self.client.server_ip, self.client.server_port)
+    self.display.insert(END, msg, "APP_MSG")
     self.display.config(state=DISABLED)
     self.client.start_receiving(self)
 
@@ -39,9 +40,11 @@ class ChatUI(Frame):
       self.input.delete(0, END)
 
 
-  def recv_msg(self, message):
+  def recv_msg(self, *argv):
     self.display.config(state=NORMAL)
-    self.display.insert(END, "\n" + message)
+    self.display.insert(END, "\n")
+    for msg in argv:
+      self.display.insert(END, msg[0], msg[1])
     self.display.config(state=DISABLED)
     self.display.see(END)
 
@@ -52,26 +55,46 @@ class ChatUI(Frame):
       for user in pkt['user_list']:
         self.user_list.insert(END, user)
     else:
-      self.recv_msg(self.construct_message(pkt))
+      self.recv_msg(*self.construct_message(pkt))
 
 
   def construct_message(self, pkt):
     if pkt['type'] == 'SRV_MSG':
-      return "<SERVER> {message}".format(**pkt)
+      return (["<SERVER> {message}".format(**pkt), "SRV_MSG_FG"], )
     if pkt['type'] == 'SRV_ERR':
-      return "<SERVER ERROR> {message}".format(**pkt)
+      return (["<SERVER ERROR> {message}".format(**pkt), "SRV_ERR_FG"], )
     if pkt['type'] == 'SRV_USR_CON':
-      return "{username} CONNECTED".format(**pkt)
+      return (
+        ["{username}".format(**pkt), "USER_FG"],
+        [" CONNECTED", "SRV_MSG_FG"],
+      )
     if pkt['type'] == 'SRV_USR_DCN':
-      return "{username} DISCONNECTED".format(**pkt)
+      if type(pkt['username']) == list:
+        msg = ()
+        for user in pkt['username']:
+          msg += ([user, "USER_FG"], [", ", "SRV_MSG_FG"])
+        return msg[:-1] + ([" DISCONNECTED", "SRV_MSG_FG"], )
     if pkt['type'] == 'USR_MSG':
-      return "{username}: {message}".format(**pkt)
+      return (
+        ["{username}".format(**pkt), "USER_FG"],
+        [": {message}".format(**pkt), "MSG_FG"],
+      )
     if pkt['type'] == 'PRV_USR_MSG_SND':
       self.client.last_received = pkt['username']
-      return "<To: {username}> {message}".format(**pkt)
+      return (
+        ["<To: ", "PRIV_MSG_FG"],
+        ["{username}".format(**pkt), "PRIV_USER_FG"],
+        ["> ", "PRIV_MSG_FG"],
+        ["{message}".format(**pkt), "PRIV_MSG_FG"],
+      )
     if pkt['type'] == 'PRV_USR_MSG_RECV':
       self.client.last_received = pkt['username']
-      return "<From: {username}> {message}".format(**pkt)
+      return (
+        ["<From: ", "PRIV_MSG_FG"],
+        ["{username}".format(**pkt), "PRIV_USER_FG"],
+        ["> ", "PRIV_MSG_FG"],
+        ["{message}".format(**pkt), "PRIV_MSG_FG"],
+      )
 
 
   def createWidgets(self):
@@ -133,6 +156,17 @@ class ChatUI(Frame):
     self.display_ds.grid(row=1, column=2, sticky=N+S+E)
     self.display_ds.config(command=self.display.yview)
     self.display.config(state=DISABLED, wrap="word", yscrollcommand=self.display_ds.set)
+    self.display.tag_config('DEFAULT_FG', foreground='#000000')
+    self.display.tag_config('USER_FG', foreground='#00afac')
+    self.display.tag_config('MSG_FG', foreground='#000000')
+    self.display.tag_config('PRIV_USER_FG', foreground='#b250b2')
+    self.display.tag_config('PRIV_MSG_FG', foreground='#b250b2')
+    self.display.tag_config('SRV_MSG_FG', foreground='#000000')
+    self.display.tag_config('SRV_ERR_FG', foreground='#ff4700')
+    self.display.tag_config('ERROR_FG', foreground='#ff4700')
+    self.display.tag_config('HELP_FG', foreground='#7b78ba')
+    self.display.tag_config('APP_MSG', foreground='#000000')
+
 
     # Row 2
     input_text = StringVar()

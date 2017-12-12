@@ -96,7 +96,7 @@ class Client():
               + "/h -- show this\n" \
               + "/whisper or /w [user] [message] sends a private message\n" \
               + "/reply or /r [message] -- sends a reply to latest private message"
-      self.gui.recv_msg(message)
+      self.gui.recv_msg([message, "HELP_FG"])
     elif command in ["/whisper", "/w"]:
       args = string.split(" ", 2)
       if len(args) == 3:
@@ -106,15 +106,19 @@ class Client():
         })
         self.send_packet(gpkt)
       else:
-        self.gui.recv_msg("Invalid use of /whisper. /whisper [user] [message]")
+        message = "Invalid use of /whisper. /whisper [user] [message]"
+        self.gui.recv_msg([message, "ERROR_FG"])
     elif command in ["/reply", "/r"]:
       args = string.split(" ", 1)
       if len(args) == 2:
         if self.last_received:
           self.chat_commands(" ".join(["/w", self.last_received, args[1]]))
         else:
-          self.gui.recv_msg("No one sent you a private message.")
+          message = "No one sent you a private message."
+          self.gui.recv_msg([message, "ERROR_FG"])
       else:
-        self.gui.recv_msg("Invalid use of /reply. /reply [message]")
+        message = "Invalid use of /reply. /reply [message]"
+        self.gui.recv_msg([message, "ERROR_FG"])
     else:
-      self.gui.recv_msg("Invalid Command")
+      message = "Invalid Command"
+      self.gui.recv_msg([message, "ERROR_FG"])
