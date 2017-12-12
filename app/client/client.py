@@ -1,8 +1,8 @@
 import socket
 import threading
 import struct
-from app.server.packet import encode_packet, decode_packet
-from app.helper.socket_helper import recvall
+from app.misc.packet import Packet
+from app.misc.socket_helper import recvall
 
 
 class Client():
@@ -11,17 +11,25 @@ class Client():
     self.status = "DISCONNECTED"
     self.last_received = None
 
+
   def connect(self, server_ip, server_port, username, password):
     self.server_ip = server_ip
     self.server_port = server_port
-    self.username = username
-    self.password = password
+    self.user = {
+      'username': username,
+      'password': password,
+    }
 
-    s = self.send_packet("CONNECT", close=False)
-    resp = self.receive_packet(s)["data"]
-    if resp == "CONNECTED":
+    gpkt = Packet.server_packet("USR_CON", self.user)
+    s = self.send_packet(gpkt, close=False)
+    resp = self.receive_packet(s)
+
+    if resp['type'] == "SRV_OK":
       self.server_socket = s
       self.status = "CONNECTED"
+    elif resp['type'] == "SRV_ERR":
+      print(resp['message'])
+      s.close()
     else:
       s.close()
 
@@ -29,7 +37,8 @@ class Client():
   def disconnect(self):
     self.receiving = False
     self.status = "DISCONNECTED"
-    self.send_packet("DISCONNECT")
+    gpkt = Packet.server_packet("USR_DCN", self.user)
+    self.send_packet(gpkt)
 
 
   def get_server_address(self):
@@ -40,7 +49,8 @@ class Client():
     if message.startswith("/"):
       self.chat_commands(message)
     else:
-      self.send_packet("SEND", message)
+      gpkt = Packet.server_packet("USR_SND", self.user, message)
+      self.send_packet(gpkt)
 
 
   def start_receiving(self, gui):
@@ -56,30 +66,16 @@ class Client():
 
 
   def listen_packets(self, gui):
-    def process_packet(gui, pkt):
-      if pkt["command"] == "MESSAGE":
-        gui.recv_msg(pkt["data"])
-      elif pkt["command"] == "WHISPER":
-        self.last_received = pkt["data"]["user"]
-        gui.recv_msg(pkt["data"]["message"])
-      elif pkt["command"] == "USER_LIST":
-        gui.update_user_list(pkt["data"])
-
     while self.receiving:
       pkt = self.receive_packet(self.server_socket)
       if pkt:
-        process_packet(gui, pkt)
+        gui.update_view(pkt)
 
 
-  def send_packet(self, command, data={}, close=True):
+  def send_packet(self, pkt, close=True):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((self.server_ip, self.server_port))
-    s.sendall(encode_packet({
-      "command": command,
-      "username": self.username,
-      "password": self.password,
-      "data": data,
-    }))
+    s.sendall(pkt)
     if close:
       s.close()
     return s
@@ -90,7 +86,7 @@ class Client():
     if not xpkt_len:
       return None
     pkt_len = struct.unpack('>I', xpkt_len)[0]
-    return decode_packet(recvall(sock, pkt_len))
+    return Packet.decode_packet(recvall(sock, pkt_len))
 
 
   def chat_commands(self, string):
@@ -104,10 +100,11 @@ class Client():
     elif command in ["/whisper", "/w"]:
       args = string.split(" ", 2)
       if len(args) == 3:
-        self.send_packet("WHISPER", {
-          "user": args[1],
-          "message": args[2],
+        gpkt = Packet.server_packet("USR_WHPR", self.user, {
+          'send_to': args[1],
+          'message': args[2],
         })
+        self.send_packet(gpkt)
       else:
         self.gui.recv_msg("Invalid use of /whisper. /whisper [user] [message]")
     elif command in ["/reply", "/r"]:

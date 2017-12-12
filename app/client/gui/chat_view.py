@@ -9,7 +9,7 @@ class ChatUI(Frame):
     self.root = master
     self.root.rowconfigure(0, weight=1)
     self.root.columnconfigure(0, weight=1)
-    self.root.winfo_toplevel().title("Logged in as <%s> @ %s" % (self.client.username, self.client.get_server_address()))
+    self.root.winfo_toplevel().title("Logged in as <%s> @ %s" % (self.client.user['username'], self.client.get_server_address()))
 
     Frame.__init__(self, self.root)
 
@@ -46,10 +46,32 @@ class ChatUI(Frame):
     self.display.see(END)
 
 
-  def update_user_list(self, user_list):
-    self.user_list.delete(0, END)
-    for user in user_list:
-      self.user_list.insert(END, user)
+  def update_view(self, pkt):
+    if pkt['type'] == 'USR_LST':
+      self.user_list.delete(0, END)
+      for user in pkt['user_list']:
+        self.user_list.insert(END, user)
+    else:
+      self.recv_msg(self.construct_message(pkt))
+
+
+  def construct_message(self, pkt):
+    if pkt['type'] == 'SRV_MSG':
+      return "<SERVER> {message}".format(**pkt)
+    if pkt['type'] == 'SRV_ERR':
+      return "<SERVER ERROR> {message}".format(**pkt)
+    if pkt['type'] == 'SRV_USR_CON':
+      return "{username} CONNECTED".format(**pkt)
+    if pkt['type'] == 'SRV_USR_DCN':
+      return "{username} DISCONNECTED".format(**pkt)
+    if pkt['type'] == 'USR_MSG':
+      return "{username}: {message}".format(**pkt)
+    if pkt['type'] == 'PRV_USR_MSG_SND':
+      self.client.last_received = pkt['username']
+      return "<To: {username}> {message}".format(**pkt)
+    if pkt['type'] == 'PRV_USR_MSG_RECV':
+      self.client.last_received = pkt['username']
+      return "<From: {username}> {message}".format(**pkt)
 
 
   def createWidgets(self):
