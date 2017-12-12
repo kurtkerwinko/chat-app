@@ -1,5 +1,6 @@
 import socket
 import struct
+from app.server.gui.color_print import pr_red, pr_green, pr_yellow
 from app.misc.packet import Packet
 from app.misc.socket_helper import recvall
 
@@ -38,7 +39,7 @@ class RequestHandler():
       gpkt = Packet.client_packet("SRV_ERR", "USERNAME_TAKEN")
       self.send_packet(self.client, gpkt)
       self.client.close()
-      print("FAILED - USERNAME TAKEN: %s @ %s" % (username, self.cl_addr))
+      pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (username, self.cl_addr))
     else:
       gpkt = Packet.client_packet("SRV_USR_CON", username)
       self.broadcast(gpkt)
@@ -49,7 +50,7 @@ class RequestHandler():
       }
       gpkt = Packet.client_packet("SRV_OK")
       self.send_packet(self.client, gpkt)
-      print("CONNECTED: %s @ %s" % (username, self.cl_addr))
+      pr_green("CONNECTED: %s @ %s" % (username, self.cl_addr))
       gpkt_usr = Packet.client_packet("USR_LST", sorted(self.active_connections.keys()))
       self.broadcast(gpkt_usr)
 
@@ -59,7 +60,7 @@ class RequestHandler():
     del self.active_connections[username]
     cl_socket = ac["client"]
     cl_socket.close()
-    print("DISCONNECTED: %s @ %s" % (username, ac["ip_address"]))
+    pr_red("DISCONNECTED: %s @ %s" % (username, ac["ip_address"]))
     gpkt = Packet.client_packet("SRV_USR_DCN", username)
     self.broadcast(gpkt)
     self.client.close()
@@ -77,7 +78,7 @@ class RequestHandler():
         dropped.append(c)
     for c in dropped:
       ip_addr = self.active_connections[c]["ip_address"]
-      print("DISCONNECTED: %s @ %s" % (c, ip_addr))
+      pr_red("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
       gpkt = Packet.client_packet("SRV_USR_DCN", dropped)

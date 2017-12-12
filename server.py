@@ -1,6 +1,7 @@
 import sys
 import socket
 import threading
+from app.server.gui.color_print import pr_green
 from app.server.request_handler import RequestHandler
 
 SERVER_IP = ''
@@ -17,7 +18,7 @@ s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 s.bind((SERVER_IP, SERVER_PORT))
 s.listen(SERVER_BACKLOG)
 
-print("SERVER: %s:%s" % (SERVER_IP, SERVER_PORT))
+pr_green("SERVER: %s:%s" % (SERVER_IP, SERVER_PORT))
 
 def dispatch_req(active_connections, client, address):
   rh = RequestHandler(active_connections, client, address)
