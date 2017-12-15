@@ -13,8 +13,8 @@ class ChatUI(Frame):
 
     Frame.__init__(self, self.root)
 
-    self.grid()
     self.grid(row=0, column=0, sticky=N+S+W+E)
+    self.create_menu_bar()
     self.createWidgets()
 
     self.root.update()
@@ -29,9 +29,12 @@ class ChatUI(Frame):
     self.client.start_receiving(self)
 
 
-  def disconnect(self):
+  def disconnect(self, quit=False):
     self.client.disconnect()
-    self.parent.show_login()
+    if quit:
+      self.root.quit()
+    else:
+      self.parent.show_login()
 
 
   def send_msg(self, event=None):
@@ -102,6 +105,20 @@ class ChatUI(Frame):
       )
 
 
+  def create_menu_bar(self):
+    def test():
+      print("TEST")
+
+    self.menu_bar = Menu(self)
+    self.root.config(menu=self.menu_bar)
+    self.chat_menu = Menu(self.menu_bar, tearoff=0)
+    self.chat_menu.add_command(label="Preferences", command=test)
+    self.chat_menu.add_command(label="Disconnect", command=self.disconnect)
+    self.chat_menu.add_separator()
+    self.chat_menu.add_command(label="Exit", command=lambda: self.disconnect(True))
+    self.menu_bar.add_cascade(label='Chat', menu=self.chat_menu)
+
+
   def createWidgets(self):
     def longest_common_string(match, usr_list):
       if len(usr_list) == 0:
@@ -143,20 +160,9 @@ class ChatUI(Frame):
     self.columnconfigure(3, minsize=1, weight=1)
     self.columnconfigure(4, minsize=1, weight=1)
 
-    # Row 0
-    self.disconnect = Button(self, text="DISCONNECT", command=self.disconnect)
-    self.disconnect.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
-
-    self.user_list = Listbox(self, selectmode="SINGLE")
-    self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)
-    self.user_list_ds = Scrollbar(self)
-    self.user_list_ds.grid(row=0, rowspan=3, column=4, sticky=N+S+E)
-    self.user_list_ds.config(command=self.user_list.yview)
-    self.user_list.config(yscrollcommand=self.user_list_ds.set)
-
-    # Row 1
+    # Row 0 ~ 1
     self.display = Text(self)
-    self.display.grid(row=1, column=0, columnspan=2, sticky=N+S+W+E)
+    self.display.grid(row=0, rowspan=2, column=0, columnspan=2, sticky=N+S+W+E)
     self.display_ds = Scrollbar(self)
     self.display_ds.grid(row=1, column=2, sticky=N+S+E)
     self.display_ds.config(command=self.display.yview)
@@ -172,6 +178,12 @@ class ChatUI(Frame):
     self.display.tag_config('HELP_FG', foreground='#7b78ba')
     self.display.tag_config('APP_MSG', foreground='#000000')
 
+    self.user_list = Listbox(self, selectmode="SINGLE")
+    self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)
+    self.user_list_ds = Scrollbar(self)
+    self.user_list_ds.grid(row=0, rowspan=3, column=4, sticky=N+S+E)
+    self.user_list_ds.config(command=self.user_list.yview)
+    self.user_list.config(yscrollcommand=self.user_list_ds.set)
 
     # Row 2
     input_text = StringVar()

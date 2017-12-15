@@ -20,9 +20,23 @@ class LoginUI(Frame):
     self.PORT_LIMIT = 5
 
     self.grid()
+    self.create_menu_bar()
     self.createWidgets()
 
     self.root.update()
+
+
+  def create_menu_bar(self):
+    def test():
+      print("TEST")
+
+    self.menu_bar = Menu(self)
+    self.root.config(menu=self.menu_bar)
+    self.chat_menu = Menu(self.menu_bar, tearoff=0)
+    self.chat_menu.add_command(label="Preferences", command=test)
+    self.chat_menu.add_separator()
+    self.chat_menu.add_command(label="Exit", command=self.root.quit)
+    self.menu_bar.add_cascade(label='Chat', menu=self.chat_menu)
 
 
   def createWidgets(self):

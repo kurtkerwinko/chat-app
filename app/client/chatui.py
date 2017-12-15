@@ -19,7 +19,6 @@ class MainUI(Frame):
     self.root.update()
     self.root.minsize(500, 500)
 
-    self.create_menu_bar()
     self.show_login()
 
 
@@ -46,22 +45,3 @@ class MainUI(Frame):
     if hasattr(self, 'current_frame') and self.current_frame:
       self.current_frame.grid_forget()
       self.current_frame.destroy()
-
-
-  def create_menu_bar(self):
-    # Menubar
-    def test():
-      print("ASD")
-
-    # Menu Bar
-    self.menu_bar = Menu(self)
-    self.root.config(menu=self.menu_bar)
-
-    # Chat Menu
-    self.chat_menu = Menu(self.menu_bar, tearoff=0)
-    self.chat_menu.add_command(label="Preferences", command=test)
-    self.chat_menu.add_separator()
-    self.chat_menu.add_command(label="Exit", command=self.root.quit)
-    self.menu_bar.add_cascade(label='Chat', menu=self.chat_menu)
-
-    self.menu_bar.add_command(label="Undo", command=test)
