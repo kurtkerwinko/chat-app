@@ -7,6 +7,7 @@ class ChatUI(Frame):
 
     self.parent = parent
     self.root = master
+    self.root.protocol("WM_DELETE_WINDOW", lambda: self.disconnect(True))
     self.root.rowconfigure(0, weight=1)
     self.root.columnconfigure(0, weight=1)
     self.root.winfo_toplevel().title("Logged in as <%s> @ %s" % (self.client.user['username'], self.client.get_server_address()))
@@ -87,6 +88,8 @@ class ChatUI(Frame):
         self.recv_msg([message, "ERROR_FG"])
     elif command in ["/disconnect", "/dc"]:
       self.disconnect()
+    elif command in ["/quit", "/q"]:
+      self.disconnect(True)
     else:
       message = "Invalid Command"
       self.recv_msg([message, "ERROR_FG"])
