@@ -19,7 +19,6 @@ class MainUI(Frame):
     self.gui_config = GUIConfig()
 
     self.grid()
-    self.root.update()
     self.root.minsize(500, 500)
 
     self.show_login()
