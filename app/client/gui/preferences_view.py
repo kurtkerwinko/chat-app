@@ -3,11 +3,11 @@ from Tkinter import *
 
 
 class PreferencesUI(Frame):
-  def __init__(self, view, gui_config):
+  def __init__(self, master, gui_config):
     self.root = Toplevel()
     self.root.winfo_toplevel().title("Preferences")
     self.root.protocol("WM_DELETE_WINDOW", self.cancel)
-    self.view = view
+    self.view = master
 
     width = 375
     height = 300
@@ -68,7 +68,7 @@ class PreferencesUI(Frame):
     for cs in self.text_colors:
       self.gui_config.text_color[cs] = self.text_colors[cs][1].get()
     self.gui_config.save_config()
-    self.view.refresh_config()
+    self.view.current_frame.refresh_config()
     self.close()
 
 
@@ -77,5 +77,5 @@ class PreferencesUI(Frame):
 
 
   def close(self):
-    self.view.preferences_ui = None
+    self.view.current_frame.preferences_ui = None
     self.root.destroy()

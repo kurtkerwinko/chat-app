@@ -17,7 +17,8 @@ class MainUI(Frame):
     self.root.geometry('%dx%d+%d+%d' % (width, height, x, y))
 
     self.gui_config = GUIConfig()
-
+    self.preferences_ui = None
+    
     self.grid()
     self.root.minsize(500, 500)
 
@@ -30,6 +31,7 @@ class MainUI(Frame):
     self.root.columnconfigure(0, weight=1)
 
     self.current_frame = LoginUI(self, self.root, self.client)
+    self.current_frame.preferences_ui = self.preferences_ui
     self.current_frame.grid(row=0, column=0)
 
 
@@ -40,10 +42,12 @@ class MainUI(Frame):
   def show_chat(self):
     self.destroy_current_frame()
     self.current_frame = ChatUI(self, self.root, self.client)
+    self.current_frame.preferences_ui = self.preferences_ui
     self.current_frame.grid(row=0, column=0)
 
 
   def destroy_current_frame(self):
     if hasattr(self, 'current_frame') and self.current_frame:
+      self.preferences_ui = self.current_frame.preferences_ui
       self.current_frame.grid_forget()
       self.current_frame.destroy()

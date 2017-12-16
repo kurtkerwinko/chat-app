@@ -30,7 +30,7 @@ class LoginUI(Frame):
 
   def show_preferences(self):
     if not self.preferences_ui:
-      self.preferences_ui = PreferencesUI(self, self.gui_config)
+      self.preferences_ui = PreferencesUI(self.parent, self.gui_config)
 
 
   def create_menu_bar(self):
