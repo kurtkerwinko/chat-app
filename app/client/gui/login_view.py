@@ -85,13 +85,19 @@ class LoginUI(Frame):
     self.server = Entry(self, textvariable=server_text)
     server_text.trace("w", lambda *args: character_limit(server_text, self.SERVER_LIMIT))
     self.server.grid(row=2, column=1, sticky=N+S+W+E)
-    self.server.insert(0, "localhost")
+    if self.client.server_ip:
+      self.server.insert(0, self.client.server_ip)
+    else:
+      self.server.insert(0, "localhost")
 
     port_text = StringVar()
     self.port = Entry(self, textvariable=port_text)
     port_text.trace("w", lambda *args: character_limit(port_text, self.PORT_LIMIT))
     self.port.grid(row=3, column=1, sticky=N+S+W+E)
-    self.port.insert(0, "3000")
+    if self.client.server_port:
+      self.port.insert(0, self.client.server_port)
+    else:
+      self.port.insert(0, "3000")
 
     self.login = Button(self, text="Connect", command=self.connect)
     self.login.grid(row=4, column=0, columnspan=2, sticky=N+S+W+E)
