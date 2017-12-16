@@ -68,7 +68,7 @@ class PreferencesUI(Frame):
     for cs in self.text_colors:
       self.gui_config.text_color[cs] = self.text_colors[cs][1].get()
     self.gui_config.save_config()
-    self.view.current_frame.refresh_config()
+    self.view.refresh_config()
     self.close()
 
 
@@ -77,5 +77,5 @@ class PreferencesUI(Frame):
 
 
   def close(self):
-    self.view.current_frame.preferences_ui = None
+    self.view.preferences_ui = None
     self.root.destroy()

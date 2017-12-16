@@ -2,6 +2,7 @@ from Tkinter import *
 from app.client.gui.login_view import LoginUI
 from app.client.gui.chat_view import ChatUI
 from app.client.gui.config import GUIConfig
+from app.client.gui.preferences_view import PreferencesUI
 
 
 class MainUI(Frame):
@@ -18,11 +19,20 @@ class MainUI(Frame):
 
     self.gui_config = GUIConfig()
     self.preferences_ui = None
-    
+
     self.grid()
     self.root.minsize(500, 500)
 
     self.show_login()
+
+
+  def show_preferences(self):
+    if not self.preferences_ui:
+      self.preferences_ui = PreferencesUI(self, self.gui_config)
+
+
+  def refresh_config(self):
+    self.current_frame.refresh_config(self.gui_config)
 
 
   def show_login(self):
