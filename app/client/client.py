@@ -7,6 +7,12 @@ from app.misc.socket_helper import recvall
 
 class Client():
   def __init__(self):
+    self.server_ip = None
+    self.server_port = None
+    self.user = {
+      'username': None,
+      'password': None,
+    }
     self.receiving = False
     self.status = "DISCONNECTED"
     self.last_received = None

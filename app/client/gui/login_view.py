@@ -71,7 +71,10 @@ class LoginUI(Frame):
     self.username = Entry(self, textvariable=username_text)
     username_text.trace("w", lambda *args: character_limit(username_text, self.USERNAME_LIMIT))
     self.username.grid(row=0, column=1, sticky=N+S+W+E)
-    self.username.insert(0, "user-" + str(randint(1, 1000)))
+    if self.client.user['username']:
+      self.username.insert(0, self.client.user['username'])
+    else:
+      self.username.insert(0, "user-" + str(randint(1, 1000)))
 
     password_text = StringVar()
     self.password = Entry(self, show="*", textvariable=password_text)
