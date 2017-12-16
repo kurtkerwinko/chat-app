@@ -1,4 +1,5 @@
 from Tkinter import *
+from app.client.gui.preferences_view import PreferencesUI
 from random import randint
 
 
@@ -19,10 +20,28 @@ class LoginUI(Frame):
     self.SERVER_LIMIT = 15
     self.PORT_LIMIT = 5
 
+    self.gui_config = self.parent.gui_config
     self.grid()
+    self.create_menu_bar()
     self.createWidgets()
 
     self.root.update()
+
+
+  def show_preferences(self):
+    if not self.preferences_ui:
+      self.preferences_ui = PreferencesUI(self, self.gui_config)
+
+
+  def create_menu_bar(self):
+    self.menu_bar = Menu(self)
+    self.root.config(menu=self.menu_bar)
+    self.chat_menu = Menu(self.menu_bar, tearoff=0)
+    self.chat_menu.add_command(label="Preferences", command=self.show_preferences)
+    self.chat_menu.add_separator()
+    self.chat_menu.add_command(label="Exit", command=self.root.quit)
+    self.menu_bar.add_cascade(label='Chat', menu=self.chat_menu)
+    self.preferences_ui = None
 
 
   def createWidgets(self):
@@ -83,3 +102,7 @@ class LoginUI(Frame):
 
     if self.client.status == "CONNECTED":
       self.parent.logged_in()
+
+
+  def refresh_config(self):
+    pass

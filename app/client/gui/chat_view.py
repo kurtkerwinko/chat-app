@@ -1,4 +1,5 @@
 from Tkinter import *
+from app.client.gui.preferences_view import PreferencesUI
 
 
 class ChatUI(Frame):
@@ -13,9 +14,11 @@ class ChatUI(Frame):
 
     Frame.__init__(self, self.root)
 
-    self.grid()
+    self.gui_config = self.parent.gui_config
     self.grid(row=0, column=0, sticky=N+S+W+E)
+    self.create_menu_bar()
     self.createWidgets()
+    self.refresh_config()
 
     self.root.update()
     self.connected()
@@ -29,9 +32,12 @@ class ChatUI(Frame):
     self.client.start_receiving(self)
 
 
-  def disconnect(self):
+  def disconnect(self, quit=False):
     self.client.disconnect()
-    self.parent.show_login()
+    if quit:
+      self.root.quit()
+    else:
+      self.parent.show_login()
 
 
   def send_msg(self, event=None):
@@ -103,6 +109,23 @@ class ChatUI(Frame):
       )
 
 
+  def show_preferences(self):
+    if not self.preferences_ui:
+      self.preferences_ui = PreferencesUI(self, self.gui_config)
+
+
+  def create_menu_bar(self):
+    self.menu_bar = Menu(self)
+    self.root.config(menu=self.menu_bar)
+    self.chat_menu = Menu(self.menu_bar, tearoff=0)
+    self.chat_menu.add_command(label="Preferences", command=self.show_preferences)
+    self.chat_menu.add_command(label="Disconnect", command=self.disconnect)
+    self.chat_menu.add_separator()
+    self.chat_menu.add_command(label="Exit", command=lambda: self.disconnect(True))
+    self.menu_bar.add_cascade(label='Chat', menu=self.chat_menu)
+    self.preferences_ui = None
+
+
   def createWidgets(self):
     def longest_common_string(match, usr_list):
       if len(usr_list) == 0:
@@ -144,9 +167,13 @@ class ChatUI(Frame):
     self.columnconfigure(3, minsize=1, weight=1)
     self.columnconfigure(4, minsize=1, weight=1)
 
-    # Row 0
-    self.dc_button = Button(self, text="DISCONNECT", command=self.disconnect)
-    self.dc_button.grid(row=0, column=0, columnspan=3, sticky=N+S+W+E)
+    # Row 0 ~ 1
+    self.display = Text(self)
+    self.display.grid(row=0, rowspan=2, column=0, columnspan=2, sticky=N+S+W+E)
+    self.display_ds = Scrollbar(self)
+    self.display_ds.grid(row=1, column=2, sticky=N+S+E)
+    self.display_ds.config(command=self.display.yview)
+    self.display.config(state=DISABLED, wrap="word", yscrollcommand=self.display_ds.set)
 
     self.user_list = Listbox(self, selectmode="SINGLE")
     self.user_list.grid(row=0, rowspan=3, column=3, sticky=N+S+W+E)
@@ -154,25 +181,6 @@ class ChatUI(Frame):
     self.user_list_ds.grid(row=0, rowspan=3, column=4, sticky=N+S+E)
     self.user_list_ds.config(command=self.user_list.yview)
     self.user_list.config(yscrollcommand=self.user_list_ds.set)
-
-    # Row 1
-    self.display = Text(self)
-    self.display.grid(row=1, column=0, columnspan=2, sticky=N+S+W+E)
-    self.display_ds = Scrollbar(self)
-    self.display_ds.grid(row=1, column=2, sticky=N+S+E)
-    self.display_ds.config(command=self.display.yview)
-    self.display.config(state=DISABLED, wrap="word", yscrollcommand=self.display_ds.set)
-    self.display.tag_config('DEFAULT_FG', foreground='#000000')
-    self.display.tag_config('USER_FG', foreground='#00afac')
-    self.display.tag_config('MSG_FG', foreground='#000000')
-    self.display.tag_config('PRIV_USER_FG', foreground='#b250b2')
-    self.display.tag_config('PRIV_MSG_FG', foreground='#b250b2')
-    self.display.tag_config('SRV_MSG_FG', foreground='#000000')
-    self.display.tag_config('SRV_ERR_FG', foreground='#ff4700')
-    self.display.tag_config('ERROR_FG', foreground='#ff4700')
-    self.display.tag_config('HELP_FG', foreground='#7b78ba')
-    self.display.tag_config('APP_MSG', foreground='#000000')
-
 
     # Row 2
     input_text = StringVar()
@@ -184,3 +192,9 @@ class ChatUI(Frame):
 
     self.send = Button(self, text="SEND", command=self.send_msg)
     self.send.grid(row=2, column=1, columnspan=2, sticky=N+S+W+E)
+
+
+  def refresh_config(self):
+    for cs in self.gui_config.text_color:
+      fgc = self.gui_config.text_color[cs]
+      self.display.tag_config(cs, foreground=fgc)

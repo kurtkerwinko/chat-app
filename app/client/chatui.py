@@ -1,6 +1,7 @@
 from Tkinter import *
 from app.client.gui.login_view import LoginUI
 from app.client.gui.chat_view import ChatUI
+from app.client.gui.config import GUIConfig
 
 
 class MainUI(Frame):
@@ -14,6 +15,8 @@ class MainUI(Frame):
     x = (self.root.winfo_screenwidth()/2) - (width/2)
     y = (self.root.winfo_screenheight()/2) - (height/2)
     self.root.geometry('%dx%d+%d+%d' % (width, height, x, y))
+
+    self.gui_config = GUIConfig()
 
     self.grid()
     self.root.update()
