@@ -114,9 +114,6 @@ class ChatUI(Frame):
 
 
   def create_menu_bar(self):
-    def test():
-      print("TEST")
-
     self.menu_bar = Menu(self)
     self.root.config(menu=self.menu_bar)
     self.chat_menu = Menu(self.menu_bar, tearoff=0)
