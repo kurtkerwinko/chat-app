@@ -7,17 +7,20 @@ class PreferencesUI(Frame):
     self.root = Toplevel()
     self.root.winfo_toplevel().title("Preferences")
     self.root.protocol("WM_DELETE_WINDOW", self.cancel)
+    self.view = view
 
     width = 375
     height = 300
-    x = (self.root.winfo_screenwidth()/2) - (width/2)
-    y = (self.root.winfo_screenheight()/2) - (height/2)
+    sizes = re.compile("([x]|[+])").split(self.view.root.geometry())
+    offset_x = int(sizes[0]) - width
+    offset_y = int(sizes[2]) - height
+    x = (self.view.root.winfo_x()) + (offset_x/2)
+    y = (self.view.root.winfo_y()) + (offset_y/2) - 20
     self.root.geometry('%dx%d+%d+%d' % (width, height, x, y))
     self.root.resizable(width=False, height=False)
 
     Frame.__init__(self, self.root)
 
-    self.view = view
     self.gui_config = gui_config
     self.grid(row=0, column=0, padx=20, pady=20, sticky=N+S+W+E)
     self.createWidgets()
