@@ -51,11 +51,16 @@ class Client():
 
 
   def send_message(self, message):
-    if message.startswith("/"):
-      self.chat_commands(message)
-    else:
-      gpkt = Packet.server_packet("USR_SND", self.user, message)
-      self.send_packet(gpkt)
+    gpkt = Packet.server_packet("USR_SND", self.user, message)
+    self.send_packet(gpkt)
+
+
+  def send_whisper(self, send_to, message):
+    gpkt = Packet.server_packet("USR_WHPR", self.user, {
+      'send_to': send_to,
+      'message': message,
+    })
+    self.send_packet(gpkt)
 
 
   def start_receiving(self, gui):
@@ -92,41 +97,3 @@ class Client():
       return None
     pkt_len = struct.unpack('>I', xpkt_len)[0]
     return Packet.decode_packet(recvall(sock, pkt_len))
-
-
-  def chat_commands(self, string):
-    command = string.split(" ", 1)[0]
-    if command in ["/help", "/h"]:
-      message = "List of commands\n" \
-              + "/help or /h -- show this\n" \
-              + "/whisper or /w [user] [message] sends a private message\n" \
-              + "/reply or /r [message] -- sends a reply to latest private message\n" \
-              + "/disconnect or /dc -- disconnect from server"
-      self.gui.recv_msg([message, "HELP_FG"])
-    elif command in ["/whisper", "/w"]:
-      args = string.split(" ", 2)
-      if len(args) == 3:
-        gpkt = Packet.server_packet("USR_WHPR", self.user, {
-          'send_to': args[1],
-          'message': args[2],
-        })
-        self.send_packet(gpkt)
-      else:
-        message = "Invalid use of /whisper. /whisper [user] [message]"
-        self.gui.recv_msg([message, "ERROR_FG"])
-    elif command in ["/reply", "/r"]:
-      args = string.split(" ", 1)
-      if len(args) == 2:
-        if self.last_received:
-          self.chat_commands(" ".join(["/w", self.last_received, args[1]]))
-        else:
-          message = "No one sent you a private message."
-          self.gui.recv_msg([message, "ERROR_FG"])
-      else:
-        message = "Invalid use of /reply. /reply [message]"
-        self.gui.recv_msg([message, "ERROR_FG"])
-    elif command in ["/disconnect", "/dc"]:
-      self.gui.disconnect()
-    else:
-      message = "Invalid Command"
-      self.gui.recv_msg([message, "ERROR_FG"])

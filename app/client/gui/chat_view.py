@@ -44,7 +44,10 @@ class ChatUI(Frame):
     if len(self.input.get()) > 0:
       text = self.input.get()
       self.input.delete(0, END)
-      self.client.send_message(text)
+      if text.startswith("/"):
+        self.chat_commands(text)
+      else:
+        self.client.send_message(text)
 
 
   def recv_msg(self, *argv):
@@ -54,6 +57,41 @@ class ChatUI(Frame):
       self.display.insert(END, msg[0], msg[1])
     self.display.config(state=DISABLED)
     self.display.see(END)
+
+
+  def chat_commands(self, string):
+    command = string.split(" ", 1)[0]
+    if command in ["/help", "/h"]:
+      message = "List of commands\n" \
+              + "/help or /h -- show this\n" \
+              + "/whisper or /w [user] [message] sends a private message\n" \
+              + "/reply or /r [message] -- sends a reply to latest private message\n" \
+              + "/disconnect or /dc -- disconnect from server"
+      self.recv_msg([message, "HELP_FG"])
+    elif command in ["/whisper", "/w"]:
+      args = string.split(" ", 2)
+      if len(args) == 3:
+        self.client.send_whisper(args[1], args[2])
+      else:
+        message = "Invalid use of /whisper. /whisper [user] [message]"
+        self.recv_msg([message, "ERROR_FG"])
+    elif command in ["/reply", "/r"]:
+      args = string.split(" ", 1)
+      if len(args) == 2:
+        last_recv = self.client.last_received
+        if last_recv:
+          self.chat_commands(" ".join(["/w", last_recv, args[1]]))
+        else:
+          message = "No one sent you a private message."
+          self.recv_msg([message, "ERROR_FG"])
+      else:
+        message = "Invalid use of /reply. /reply [message]"
+        self.recv_msg([message, "ERROR_FG"])
+    elif command in ["/disconnect", "/dc"]:
+      self.disconnect()
+    else:
+      message = "Invalid Command"
+      self.recv_msg([message, "ERROR_FG"])
 
 
   def update_view(self, pkt):
