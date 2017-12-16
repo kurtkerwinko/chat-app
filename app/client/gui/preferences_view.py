@@ -6,6 +6,7 @@ class PreferencesUI(Frame):
   def __init__(self, view, gui_config):
     self.root = Toplevel()
     self.root.winfo_toplevel().title("Preferences")
+    self.root.protocol("WM_DELETE_WINDOW", self.cancel)
 
     width = 375
     height = 300
