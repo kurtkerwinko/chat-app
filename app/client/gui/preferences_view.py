@@ -13,7 +13,7 @@ class PreferencesUI(Frame):
     height = 300
     sizes = re.compile("([x]|[+])").split(self.view.root.geometry())
     offset_x = int(sizes[0]) - width
-    offset_y = int(sizes[2]) - height
+    offset_y = int(sizes[2]) - height - 50
     x = (self.view.root.winfo_x()) + (offset_x/2)
     y = (self.view.root.winfo_y()) + (offset_y/2) - 20
     self.root.geometry('%dx%d+%d+%d' % (width, height, x, y))
