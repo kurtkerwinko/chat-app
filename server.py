@@ -4,7 +4,7 @@ import threading
 from app.server.gui.color_print import pr_green
 from app.server.request_handler import RequestHandler
 
-SERVER_IP = ''
+SERVER_IP = '0.0.0.0'
 SERVER_PORT = 3000
 SERVER_BACKLOG = 5
 
