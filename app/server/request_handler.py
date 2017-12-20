@@ -51,7 +51,7 @@ class RequestHandler():
       gpkt = Packet.generate_packet("SRV_OK")
       self.send_packet(self.client, gpkt)
       pr_green("CONNECTED: %s @ %s" % (username, self.cl_addr))
-      gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
       self.broadcast(gpkt_usr)
 
 
@@ -64,7 +64,7 @@ class RequestHandler():
     gpkt = Packet.generate_packet("SRV_USR_DCN", username=username)
     self.broadcast(gpkt)
     self.client.close()
-    gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
+    gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
     self.broadcast(gpkt_usr)
 
 
@@ -82,7 +82,7 @@ class RequestHandler():
       del self.active_connections[c]
     if len(dropped) > 0:
       gpkt = Packet.generate_packet("SRV_USR_DCN", username=dropped)
-      gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
       self.broadcast(gpkt)
       self.broadcast(gpkt_usr)
 
