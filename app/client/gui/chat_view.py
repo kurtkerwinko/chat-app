@@ -65,7 +65,8 @@ class ChatUI(Frame):
               + "/help or /h -- show this\n" \
               + "/whisper or /w [user] [message] sends a private message\n" \
               + "/reply or /r [message] -- sends a reply to latest private message\n" \
-              + "/disconnect or /dc -- disconnect from server"
+              + "/disconnect or /dc -- disconnect from server\n" \
+              + "/quit or /q -- quit application"
       self.recv_msg([message, "HELP_FG"])
     elif command in ["/whisper", "/w"]:
       args = string.split(" ", 2)
