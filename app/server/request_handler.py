@@ -36,22 +36,22 @@ class RequestHandler():
 
   def connect(self, username, password, **_):
     if self.user_exists(username):
-      gpkt = Packet.client_packet("SRV_ERR", "USERNAME_TAKEN")
+      gpkt = Packet.generate_packet("SRV_ERR", message="USERNAME_TAKEN")
       self.send_packet(self.client, gpkt)
       self.client.close()
       pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (username, self.cl_addr))
     else:
-      gpkt = Packet.client_packet("SRV_USR_CON", username)
+      gpkt = Packet.generate_packet("SRV_USR_CON", username=username)
       self.broadcast(gpkt)
       self.active_connections[username] = {
         'client': self.client,
         'ip_address': self.cl_addr,
         'password': password
       }
-      gpkt = Packet.client_packet("SRV_OK")
+      gpkt = Packet.generate_packet("SRV_OK")
       self.send_packet(self.client, gpkt)
       pr_green("CONNECTED: %s @ %s" % (username, self.cl_addr))
-      gpkt_usr = Packet.client_packet("USR_LST", sorted(self.active_connections.keys()))
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
       self.broadcast(gpkt_usr)
 
 
@@ -61,10 +61,10 @@ class RequestHandler():
     cl_socket = ac["client"]
     cl_socket.close()
     pr_red("DISCONNECTED: %s @ %s" % (username, ac["ip_address"]))
-    gpkt = Packet.client_packet("SRV_USR_DCN", username)
+    gpkt = Packet.generate_packet("SRV_USR_DCN", username=username)
     self.broadcast(gpkt)
     self.client.close()
-    gpkt_usr = Packet.client_packet("USR_LST", sorted(self.active_connections.keys()))
+    gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
     self.broadcast(gpkt_usr)
 
 
@@ -81,17 +81,14 @@ class RequestHandler():
       pr_red("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
-      gpkt = Packet.client_packet("SRV_USR_DCN", dropped)
-      gpkt_usr = Packet.client_packet("USR_LST", sorted(self.active_connections.keys()))
+      gpkt = Packet.generate_packet("SRV_USR_DCN", username=dropped)
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list= sorted(self.active_connections.keys()))
       self.broadcast(gpkt)
       self.broadcast(gpkt_usr)
 
 
   def user_send(self, username, message, **_):
-    gpkt = Packet.client_packet('USR_MSG', {
-      'username': username,
-      'message': message,
-    })
+    gpkt = Packet.generate_packet('USR_MSG', username=username, message=message)
     self.broadcast(gpkt)
 
 
@@ -101,18 +98,12 @@ class RequestHandler():
     snd_cl = self.active_connections[snd_user]["client"]
     if recv_user in self.active_connections.keys():
       recv_cl = self.active_connections[recv_user]["client"]
-      recv_gpkt = Packet.client_packet("PRV_USR_MSG_RECV", {
-        'username': snd_user,
-        'message': message
-      })
-      snd_gpkt = Packet.client_packet("PRV_USR_MSG_SND", {
-        'username': recv_user,
-        'message': message
-      })
+      recv_gpkt = Packet.generate_packet("PRV_USR_MSG_RECV", username=snd_user, message=message)
+      snd_gpkt = Packet.generate_packet("PRV_USR_MSG_SND", username=recv_user, message=message)
       self.send_packet(snd_cl, snd_gpkt)
       self.send_packet(recv_cl, recv_gpkt)
     else:
-      gpkt = Packet.client_packet('SRV_ERR', "User does not exist.")
+      gpkt = Packet.generate_packet('SRV_ERR', message="User does not exist.")
       self.send_packet(snd_cl, gpkt)
 
 

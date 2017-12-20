@@ -26,7 +26,7 @@ class Client():
       'password': password,
     }
 
-    gpkt = Packet.server_packet("USR_CON", self.user)
+    gpkt = Packet.generate_packet("USR_CON", **self.user)
     s = self.send_packet(gpkt, close=False)
     resp = self.receive_packet(s)
 
@@ -42,7 +42,7 @@ class Client():
   def disconnect(self):
     self.receiving = False
     self.status = "DISCONNECTED"
-    gpkt = Packet.server_packet("USR_DCN", self.user)
+    gpkt = Packet.generate_packet("USR_DCN", **self.user)
     self.send_packet(gpkt)
 
 
@@ -51,15 +51,12 @@ class Client():
 
 
   def send_message(self, message):
-    gpkt = Packet.server_packet("USR_SND", self.user, message)
+    gpkt = Packet.generate_packet("USR_SND", message=message, **self.user)
     self.send_packet(gpkt)
 
 
   def send_whisper(self, send_to, message):
-    gpkt = Packet.server_packet("USR_WHPR", self.user, {
-      'send_to': send_to,
-      'message': message,
-    })
+    gpkt = Packet.generate_packet("USR_WHPR", send_to=send_to, message=message, **self.user)
     self.send_packet(gpkt)
 
 
