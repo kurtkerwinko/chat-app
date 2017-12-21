@@ -97,56 +97,14 @@ class ChatUI(Frame):
 
 
   def update_view(self, pkt):
-    if pkt['type'] == 'USR_LST':
+    if pkt.pkt_type == 'USR_LST':
       self.user_list.delete(0, END)
-      for user in pkt['user_list']:
+      for user in pkt.user_list:
         self.user_list.insert(END, user)
     else:
-      self.recv_msg(*self.construct_message(pkt))
-
-
-  def construct_message(self, pkt):
-    if pkt['type'] == 'SRV_MSG':
-      return (["<SERVER> {message}".format(**pkt), "SRV_MSG_FG"], )
-    if pkt['type'] == 'SRV_ERR':
-      return (["<SERVER ERROR> {message}".format(**pkt), "SRV_ERR_FG"], )
-    if pkt['type'] == 'SRV_USR_CON':
-      return (
-        ["{username}".format(**pkt), "USER_FG"],
-        [" CONNECTED", "SRV_MSG_FG"],
-      )
-    if pkt['type'] == 'SRV_USR_DCN':
-      if type(pkt['username']) == list:
-        msg = ()
-        for user in pkt['username']:
-          msg += ([user, "USER_FG"], [", ", "SRV_MSG_FG"])
-        return msg[:-1] + ([" DISCONNECTED", "SRV_MSG_FG"], )
-      else:
-        return (
-          [pkt['username'], "USER_FG"],
-          [" DISCONNECTED", "SRV_MSG_FG"],
-        )
-    if pkt['type'] == 'USR_MSG':
-      return (
-        ["{username}".format(**pkt), "USER_FG"],
-        [": {message}".format(**pkt), "MSG_FG"],
-      )
-    if pkt['type'] == 'PRV_USR_MSG_SND':
-      self.client.last_received = pkt['username']
-      return (
-        ["<To: ", "PRIV_MSG_FG"],
-        ["{username}".format(**pkt), "PRIV_USER_FG"],
-        ["> ", "PRIV_MSG_FG"],
-        ["{message}".format(**pkt), "PRIV_MSG_FG"],
-      )
-    if pkt['type'] == 'PRV_USR_MSG_RECV':
-      self.client.last_received = pkt['username']
-      return (
-        ["<From: ", "PRIV_MSG_FG"],
-        ["{username}".format(**pkt), "PRIV_USER_FG"],
-        ["> ", "PRIV_MSG_FG"],
-        ["{message}".format(**pkt), "PRIV_MSG_FG"],
-      )
+      if pkt.last_received:
+        self.client.last_received = pkt.last_received
+      self.recv_msg(*pkt.construct_message())
 
 
   def create_menu_bar(self):

@@ -26,14 +26,14 @@ class Client():
       'password': password,
     }
 
-    gpkt = Packet.generate_packet("USR_CON", **self.user)
+    gpkt = Packet(pkt_type="USR_CON", **self.user)
     s = self.send_packet(gpkt, close=False)
     resp = self.receive_packet(s)
 
-    if resp['type'] == "SRV_OK":
+    if resp.pkt_type == "SRV_OK":
       self.server_socket = s
       self.status = "CONNECTED"
-    elif resp['type'] == "SRV_ERR":
+    elif resp.pkt_type == "SRV_ERR":
       s.close()
     else:
       s.close()
@@ -42,7 +42,7 @@ class Client():
   def disconnect(self):
     self.receiving = False
     self.status = "DISCONNECTED"
-    gpkt = Packet.generate_packet("USR_DCN", **self.user)
+    gpkt = Packet(pkt_type="USR_DCN", **self.user)
     self.send_packet(gpkt)
 
 
@@ -51,12 +51,12 @@ class Client():
 
 
   def send_message(self, message):
-    gpkt = Packet.generate_packet("USR_SND", message=message, **self.user)
+    gpkt = Packet(pkt_type="USR_SND", message=message, **self.user)
     self.send_packet(gpkt)
 
 
   def send_whisper(self, send_to, message):
-    gpkt = Packet.generate_packet("USR_WHPR", send_to=send_to, message=message, **self.user)
+    gpkt = Packet(pkt_type="USR_WHPR", send_to=send_to, message=message, **self.user)
     self.send_packet(gpkt)
 
 
@@ -82,7 +82,7 @@ class Client():
   def send_packet(self, pkt, close=True):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((self.server_ip, self.server_port))
-    s.sendall(pkt)
+    s.sendall(Packet.encode_packet(pkt))
     if close:
       s.close()
     return s
