@@ -1,4 +1,4 @@
-import pickle
+import json
 import struct
 
 
@@ -68,10 +68,10 @@ class Packet():
   # All - Payload
   @staticmethod
   def encode_packet(payload):
-    pickle_payload = pickle.dumps(payload, pickle.HIGHEST_PROTOCOL)
-    return struct.pack('>I', len(pickle_payload)) + pickle_payload
+    json_payload = json.dumps(payload.__dict__)
+    return struct.pack('>I', len(json_payload)) + json_payload
 
 
   @staticmethod
   def decode_packet(payload):
-    return pickle.loads(payload)
+    return Packet(**json.loads(payload))
