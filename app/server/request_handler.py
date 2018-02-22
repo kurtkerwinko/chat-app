@@ -34,7 +34,6 @@ class RequestHandler():
       if self.user_exists(pkt.username):
         gpkt = Packet(pkt_type="SRV_ERR", message="USERNAME_TAKEN")
         self.send_packet(self.client, gpkt)
-        self.drop_connection()
         pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (pkt.username, self.cl_addr))
       else:
         gpkt = Packet(pkt_type="SRV_USR_CON", username=pkt.username)
