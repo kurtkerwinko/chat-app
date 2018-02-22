@@ -53,10 +53,9 @@ class RequestHandler():
 
 
   def disconnect(self, pkt):
+    self.connected = False
     ac = self.active_connections[pkt.username]
     del self.active_connections[pkt.username]
-    cl_socket = ac["client"]
-    cl_socket.close()
     pr_red("DISCONNECTED: %s @ %s" % (pkt.username, ac["ip_address"]))
     gpkt = Packet(pkt_type="SRV_USR_DCN", username=pkt.username)
     self.broadcast(gpkt)
@@ -125,8 +124,3 @@ class RequestHandler():
 
   def user_exists(self, username):
     return username in self.active_connections
-
-
-  def drop_connection(self):
-    self.connected = False
-    self.disconnect()
