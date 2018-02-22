@@ -126,4 +126,4 @@ class RequestHandler():
 
   def drop_connection(self):
     self.connected = False
-    self.client.close()
+    self.disconnect()
