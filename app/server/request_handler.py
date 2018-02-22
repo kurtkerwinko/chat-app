@@ -11,48 +11,45 @@ class RequestHandler():
     self.client = client
     self.address = address
     self.cl_addr = "%s:%s" % self.address
+    self.connected = False
+
+    self.connect()
 
 
   def handle_request(self):
+    while self.connected:
+      pkt = self.receive_packet(self.client)
+      if pkt:
+        if (pkt.pkt_type == 'USR_DCN'):
+          self.disconnect(pkt)
+        elif (pkt.pkt_type == 'USR_SND'):
+          self.user_send(pkt)
+        elif (pkt.pkt_type == 'USR_WHPR'):
+          self.whisper(pkt)
+
+
+  def connect(self):
     pkt = self.receive_packet(self.client)
-    if not pkt:
-      self.client.close()
-      return None
-    self.authenticated = self.authenticate(pkt)
-
-    if (pkt.pkt_type == 'USR_CON'):
-      self.connect(pkt)
-    elif (pkt.pkt_type == 'USR_DCN' and self.authenticated):
-      self.disconnect(pkt)
-    elif (pkt.pkt_type == 'USR_SND' and self.authenticated):
-      self.user_send(pkt)
-      self.client.close()
-    elif (pkt.pkt_type == 'USR_WHPR' and self.authenticated):
-      self.whisper(pkt)
-      self.client.close()
-    else:
-      self.client.close()
-
-
-  def connect(self, pkt):
-    if self.user_exists(pkt.username):
-      gpkt = Packet(pkt_type="SRV_ERR", message="USERNAME_TAKEN")
-      self.send_packet(self.client, gpkt)
-      self.client.close()
-      pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (pkt.username, self.cl_addr))
-    else:
-      gpkt = Packet(pkt_type="SRV_USR_CON", username=pkt.username)
-      self.broadcast(gpkt)
-      self.active_connections[pkt.username] = {
-        'client': self.client,
-        'ip_address': self.cl_addr,
-        'password': pkt.password
-      }
-      gpkt = Packet(pkt_type="SRV_OK")
-      self.send_packet(self.client, gpkt)
-      pr_green("CONNECTED: %s @ %s" % (pkt.username, self.cl_addr))
-      gpkt_usr = Packet(pkt_type="USR_LST", user_list=sorted(self.active_connections.keys()))
-      self.broadcast(gpkt_usr)
+    if pkt.pkt_type == 'USR_CON':
+      if self.user_exists(pkt.username):
+        gpkt = Packet(pkt_type="SRV_ERR", message="USERNAME_TAKEN")
+        self.send_packet(self.client, gpkt)
+        self.drop_connection()
+        pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (pkt.username, self.cl_addr))
+      else:
+        gpkt = Packet(pkt_type="SRV_USR_CON", username=pkt.username)
+        self.broadcast(gpkt)
+        self.active_connections[pkt.username] = {
+          'client': self.client,
+          'ip_address': self.cl_addr,
+          'password': pkt.password
+        }
+        gpkt = Packet(pkt_type="SRV_OK")
+        self.send_packet(self.client, gpkt)
+        pr_green("CONNECTED: %s @ %s" % (pkt.username, self.cl_addr))
+        gpkt_usr = Packet(pkt_type="USR_LST", user_list=sorted(self.active_connections.keys()))
+        self.broadcast(gpkt_usr)
+        self.connected = True
 
 
   def disconnect(self, pkt):
@@ -114,7 +111,7 @@ class RequestHandler():
   def receive_packet(self, client):
     xpkt_len = recvall(client, 4)
     if not xpkt_len:
-      return client.close()
+      return None
     pkt_len = struct.unpack('>I', xpkt_len)[0]
     return Packet.decode_packet(recvall(client, pkt_len))
 
@@ -125,3 +122,8 @@ class RequestHandler():
 
   def user_exists(self, username):
     return username in self.active_connections
+
+
+  def drop_connection(self):
+    self.connected = False
+    self.client.close()

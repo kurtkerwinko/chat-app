@@ -26,17 +26,19 @@ class Client():
       'password': password,
     }
 
+    self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.server_socket.connect((self.server_ip, self.server_port))
+
     gpkt = Packet(pkt_type="USR_CON", **self.user)
-    s = self.send_packet(gpkt, close=False)
-    resp = self.receive_packet(s)
+    self.send_packet(gpkt)
+    resp = self.receive_packet()
 
     if resp.pkt_type == "SRV_OK":
-      self.server_socket = s
       self.status = "CONNECTED"
     elif resp.pkt_type == "SRV_ERR":
-      s.close()
+      self.server_socket.close()
     else:
-      s.close()
+      self.server_socket.close()
 
 
   def disconnect(self):
@@ -74,23 +76,18 @@ class Client():
 
   def listen_packets(self, gui):
     while self.receiving:
-      pkt = self.receive_packet(self.server_socket)
+      pkt = self.receive_packet()
       if pkt:
         gui.update_view(pkt)
 
 
-  def send_packet(self, pkt, close=True):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((self.server_ip, self.server_port))
-    s.sendall(Packet.encode_packet(pkt))
-    if close:
-      s.close()
-    return s
+  def send_packet(self, pkt):
+    self.server_socket.sendall(Packet.encode_packet(pkt))
 
 
-  def receive_packet(self, sock):
-    xpkt_len = recvall(sock, 4)
+  def receive_packet(self):
+    xpkt_len = recvall(self.server_socket, 4)
     if not xpkt_len:
       return None
     pkt_len = struct.unpack('>I', xpkt_len)[0]
-    return Packet.decode_packet(recvall(sock, pkt_len))
+    return Packet.decode_packet(recvall(self.server_socket, pkt_len))
