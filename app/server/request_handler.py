@@ -105,7 +105,10 @@ class RequestHandler():
 
 
   def send_packet(self, cl, pkt):
-    cl.sendall(Packet.encode_packet(pkt))
+    data = Packet.encode_packet(pkt)
+    while len(data):
+      sent = cl.send(data)
+      data = data[sent:]
 
 
   def receive_packet(self, client):

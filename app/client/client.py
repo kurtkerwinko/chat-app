@@ -28,6 +28,7 @@ class Client():
 
     self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     self.server_socket.connect((self.server_ip, self.server_port))
+    self.server_socket.setblocking(0)
 
     gpkt = Packet(pkt_type="USR_CON", **self.user)
     self.send_packet(gpkt)
@@ -82,7 +83,10 @@ class Client():
 
 
   def send_packet(self, pkt):
-    self.server_socket.sendall(Packet.encode_packet(pkt))
+    data = Packet.encode_packet(pkt)
+    while len(data):
+      sent = self.server_socket.send(data)
+      data = data[sent:]
 
 
   def receive_packet(self):
