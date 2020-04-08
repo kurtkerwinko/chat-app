@@ -18,53 +18,53 @@ class RequestHandler():
     if not pkt:
       self.client.close()
       return None
-    self.authenticated = self.authenticate(pkt)
+    self.authenticated = self.authenticate(**pkt)
 
-    if (pkt.pkt_type == 'USR_CON'):
-      self.connect(pkt)
-    elif (pkt.pkt_type == 'USR_DCN' and self.authenticated):
-      self.disconnect(pkt)
-    elif (pkt.pkt_type == 'USR_SND' and self.authenticated):
-      self.user_send(pkt)
+    if (pkt['type'] == 'USR_CON'):
+      self.connect(**pkt)
+    elif (pkt['type'] == 'USR_DCN' and self.authenticated):
+      self.disconnect(**pkt)
+    elif (pkt['type'] == 'USR_SND' and self.authenticated):
+      self.user_send(**pkt)
       self.client.close()
-    elif (pkt.pkt_type == 'USR_WHPR' and self.authenticated):
-      self.whisper(pkt)
+    elif (pkt['type'] == 'USR_WHPR' and self.authenticated):
+      self.whisper(**pkt)
       self.client.close()
     else:
       self.client.close()
 
 
-  def connect(self, pkt):
-    if self.user_exists(pkt.username):
-      gpkt = Packet(pkt_type="SRV_ERR", message="USERNAME_TAKEN")
+  def connect(self, username, password, **_):
+    if self.user_exists(username):
+      gpkt = Packet.generate_packet("SRV_ERR", message="USERNAME_TAKEN")
       self.send_packet(self.client, gpkt)
       self.client.close()
-      pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (pkt.username, self.cl_addr))
+      pr_yellow("FAILED - USERNAME TAKEN: %s @ %s" % (username, self.cl_addr))
     else:
-      gpkt = Packet(pkt_type="SRV_USR_CON", username=pkt.username)
+      gpkt = Packet.generate_packet("SRV_USR_CON", username=username)
       self.broadcast(gpkt)
-      self.active_connections[pkt.username] = {
+      self.active_connections[username] = {
         'client': self.client,
         'ip_address': self.cl_addr,
-        'password': pkt.password
+        'password': password
       }
-      gpkt = Packet(pkt_type="SRV_OK")
+      gpkt = Packet.generate_packet("SRV_OK")
       self.send_packet(self.client, gpkt)
-      pr_green("CONNECTED: %s @ %s" % (pkt.username, self.cl_addr))
-      gpkt_usr = Packet(pkt_type="USR_LST", user_list=sorted(self.active_connections.keys()))
+      pr_green("CONNECTED: %s @ %s" % (username, self.cl_addr))
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
       self.broadcast(gpkt_usr)
 
 
-  def disconnect(self, pkt):
-    ac = self.active_connections[pkt.username]
-    del self.active_connections[pkt.username]
+  def disconnect(self, username, password, **_):
+    ac = self.active_connections[username]
+    del self.active_connections[username]
     cl_socket = ac["client"]
     cl_socket.close()
-    pr_red("DISCONNECTED: %s @ %s" % (pkt.username, ac["ip_address"]))
-    gpkt = Packet(pkt_type="SRV_USR_DCN", username=pkt.username)
+    pr_red("DISCONNECTED: %s @ %s" % (username, ac["ip_address"]))
+    gpkt = Packet.generate_packet("SRV_USR_DCN", username=username)
     self.broadcast(gpkt)
     self.client.close()
-    gpkt_usr = Packet(pkt_type="USR_LST", user_list=sorted(self.active_connections.keys()))
+    gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
     self.broadcast(gpkt_usr)
 
 
@@ -81,34 +81,34 @@ class RequestHandler():
       pr_red("DISCONNECTED: %s @ %s" % (c, ip_addr))
       del self.active_connections[c]
     if len(dropped) > 0:
-      gpkt = Packet(pkt_type="SRV_USR_DCN", username=dropped)
-      gpkt_usr = Packet(pkt_type="USR_LST", user_list=sorted(self.active_connections.keys()))
+      gpkt = Packet.generate_packet("SRV_USR_DCN", username=dropped)
+      gpkt_usr = Packet.generate_packet("USR_LST", user_list=sorted(self.active_connections.keys()))
       self.broadcast(gpkt)
       self.broadcast(gpkt_usr)
 
 
-  def user_send(self, pkt):
-    gpkt = Packet(pkt_type="USR_MSG", username=pkt.username, message=pkt.message)
+  def user_send(self, username, message, **_):
+    gpkt = Packet.generate_packet('USR_MSG', username=username, message=message)
     self.broadcast(gpkt)
 
 
-  def whisper(self, pkt):
-    snd_user = pkt.username
-    recv_user = pkt.send_to
+  def whisper(self, username, send_to, message, **_):
+    snd_user = username
+    recv_user = send_to
     snd_cl = self.active_connections[snd_user]["client"]
     if recv_user in self.active_connections.keys():
       recv_cl = self.active_connections[recv_user]["client"]
-      recv_gpkt = Packet(pkt_type="PRV_USR_MSG_RECV", username=snd_user, message=pkt.message)
-      snd_gpkt = Packet(pkt_type="PRV_USR_MSG_SND", username=recv_user, message=pkt.message)
+      recv_gpkt = Packet.generate_packet("PRV_USR_MSG_RECV", username=snd_user, message=message)
+      snd_gpkt = Packet.generate_packet("PRV_USR_MSG_SND", username=recv_user, message=message)
       self.send_packet(snd_cl, snd_gpkt)
       self.send_packet(recv_cl, recv_gpkt)
     else:
-      gpkt = Packet(pkt_type="SRV_ERR", message="User does not exist.")
+      gpkt = Packet.generate_packet('SRV_ERR', message="User does not exist.")
       self.send_packet(snd_cl, gpkt)
 
 
   def send_packet(self, cl, pkt):
-    cl.sendall(Packet.encode_packet(pkt))
+    cl.sendall(pkt)
 
 
   def receive_packet(self, client):
@@ -119,8 +119,8 @@ class RequestHandler():
     return Packet.decode_packet(recvall(client, pkt_len))
 
 
-  def authenticate(self, pkt):
-    return self.active_connections.get(pkt.username, False) and self.active_connections[pkt.username]['password'] == pkt.password
+  def authenticate(self, username, password, **_):
+    return self.active_connections.get(username, False) and self.active_connections[username]['password'] == password
 
 
   def user_exists(self, username):
